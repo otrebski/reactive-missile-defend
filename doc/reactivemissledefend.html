@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=1024, user-scalable=no">
+
+  <title>Your deck.js Presentation</title>
+
+  <!-- Required stylesheet -->
+  <link rel="stylesheet" media="screen" href="core/deck.core.css">
+
+  <!-- Extension CSS files go here. Remove or add as needed. -->
+  <link rel="stylesheet" media="screen" href="extensions/goto/deck.goto.css">
+  <link rel="stylesheet" media="screen" href="extensions/menu/deck.menu.css">
+  <link rel="stylesheet" media="screen" href="extensions/navigation/deck.navigation.css">
+  <link rel="stylesheet" media="screen" href="extensions/status/deck.status.css">
+  <link rel="stylesheet" media="screen" href="extensions/scale/deck.scale.css">
+
+  <!-- Style theme. More available in /themes/style/ or create your own. -->
+  <link rel="stylesheet" media="screen" href="themes/style/neon.css">
+
+  <!-- Transition theme. More available in /themes/transition/ or create your own. -->
+  <link rel="stylesheet" media="screen" href="themes/transition/fade.css">
+
+  <!-- Basic black and white print styles -->
+  <link rel="stylesheet" media="print" href="core/print.css">
+
+  <!-- Required Modernizr file -->
+  <script src="modernizr.custom.js"></script>
+</head>
+<body>
+<div class="deck-container">
+
+  <section class="slide">
+    <h1>
+      Defend Earth against an alien invasion<br/>
+      like a pro with<br/>
+      Akka Cluster
+  </h1>
+  </section>
+  <section class="slide">
+    <h2 align="center">
+      Defend Earth against an alien invasion<br/>
+      like a pro with Akka Cluster
+    </h2><br/><code>
+    Krzysztof Otrębski @kotrebski
+  </code>
+  </section>
+
+  <section class="slide">
+    <blockquote cite="http://example.org">
+      <p>Defend Earth against an alien invasion</p>
+      <p><cite>like a pro with Akka Cluster</cite></p>
+    </blockquote>
+    <div align="right">Krzysztof Otrębski @kotrebski</div>
+  </section>
+  <section class="slide">
+    <h1>Aliens !!!</h1>
+    <img src="images/alien-308429_1280.png">
+  </section>
+
+  <section class="slide">
+    <h2>What is on the screen</h2>
+    <img src="images/general_view.png">
+  </section>
+
+  <section class="slide">
+    <h2>Our defence: towers and command centers</h2>
+    <img src="images/defence.png">
+  </section>
+
+
+  <section class="slide">
+    <h2>Cli UI</h2>
+    <img src="images/cliui.png">
+  </section>
+
+
+  <section class="slide">
+    <h2>What is cluster?</h2>
+    <div>Bunch of actor systems (nodes) with connectivity and knowledge about other nodes</div>
+  </section>
+
+
+  <section class="slide">
+    <h2>Structure of the cluster</h2>
+    <img src="images/Cluster.svg" alt="Cluster overview">
+  </section>
+
+  <section class="slide">
+    <h2>General message flow</h2>
+    <img src="images/GeneralFlow.svg" alt="General message flow"/>
+  </section>
+
+  <section class="slide">
+    <h2>Reporting flow</h2>
+    <img src="images/ReportingFlow.svg" alt="Reporting message flow"/>
+  </section>
+
+  <section class="slide">
+    <h2>Some important cluster settings</h2>
+    <pre><code>
+      akka {
+        cluster {
+          auto-down-unreachable-after = 60s
+        }
+      }
+    </code></pre>
+    *It can be to short to use on PROD, but good for having this presentation
+  </section>
+  <section class="slide">
+    <h1>Let see some action</h1>
+  </section>
+
+
+  <section class="slide">
+    <h2>What do you know now?</h2>
+    <ol>
+      <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> works</li>
+      <li>What for you need <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> and <a href="http://doc.akka.io/docs/akka/snapshot/scala/persistence.html">persistent actors</a></li>
+      <li>It's good run failover tests before going on <a href="http://blog.codinghorror.com/new-programming-jargon/">protoduction</a></li>
+      <li>Close your nodes gracefully with <code>actorSystem.shutdown()</code></li>
+    </ol>
+
+  </section>
+  <section class="slide">
+    <h2>What is next?</h2>
+    <ol>
+      <li>Upgrade to Akka 2.4</li>
+      <li>Get rid off Single Point Of Failure</li>
+      <li>Try Akka Distributed Data instead of Status Keeper</li>
+      <li>Have more fun with application</li>
+    </ol>
+
+  </section>
+
+  <section class="slide">
+    <h3>How to run</h3>
+    <pre>
+    <code>
+#Clone project from github:
+$ git clone .....
+
+#Run shared journal
+$ export SEED_NODE=akka.tcp://defend@localhost:3000; export HOST=localhost;export PORT=3000; sbt sj &#x21B5;
+
+#Run Swing UI
+$ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3001; sbt ui &#x21B5;
+
+#Run Command Center's node
+$ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3002 sbt cc &#x21B5;
+    </code>
+    </pre>
+
+  </section>
+
+
+  <section class="slide">
+    <h2>Thank you</h2>
+    <h2>Questions time</h2>
+  </section>
+  <!-- End slides. -->
+
+  <!-- Begin extension snippets. Add or remove as needed. -->
+
+  <!-- deck.navigation snippet -->
+  <div aria-role="navigation">
+    <a href="#" class="deck-prev-link" title="Previous">&#8592;</a>
+    <a href="#" class="deck-next-link" title="Next">&#8594;</a>
+  </div>
+
+  <!-- deck.status snippet -->
+  <p class="deck-status" aria-role="status">
+    <span class="deck-status-current"></span>
+    /
+    <span class="deck-status-total"></span>
+  </p>
+
+  <!-- deck.goto snippet -->
+  <form action="." method="get" class="goto-form">
+    <label for="goto-slide">Go to slide:</label>
+    <input type="text" name="slidenum" id="goto-slide" list="goto-datalist">
+    <datalist id="goto-datalist"></datalist>
+    <input type="submit" value="Go">
+  </form>
+
+  <!-- End extension snippets. -->
+</div>
+
+<!-- Required JS files. -->
+<script src="jquery.min.js"></script>
+<script src="core/deck.core.js"></script>
+
+<!-- Extension JS files. Add or remove as needed. -->
+<script src="extensions/menu/deck.menu.js"></script>
+<script src="extensions/goto/deck.goto.js"></script>
+<script src="extensions/status/deck.status.js"></script>
+<script src="extensions/navigation/deck.navigation.js"></script>
+<script src="extensions/scale/deck.scale.js"></script>
+
+<!-- Initialize the deck. You can put this in an external file if desired. -->
+<script>
+  $(function () {
+    $.deck('.slide');
+  });
+</script>
+</body>
+</html>

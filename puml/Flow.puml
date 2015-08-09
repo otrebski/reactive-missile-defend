@@ -1,0 +1,33 @@
+@startuml
+title General message flow
+group Intercepting alien missiles
+GameEngine -> GameEngine: Tick
+GameEngine -> EnemyGenerator: PingForEnemies
+hnote over GameEngine: Calculate state
+GameEngine -> DefenceTower1: Tactical situation
+GameEngine -> DefenceTower2: Tactical situation
+GameEngine <- DefenceTower2: Rocket fired
+GameEngine <- EnemyGenerator: Wave
+end
+@end
+@startuml
+title Reporting flow
+participant GameEngine
+participant DefenceTower1
+participant DefenceTower2
+group Reporting
+GameEngine -> GameEngine: Tick
+DefenceTower1 -> DefenceTower1: Tick
+DefenceTower1 -> StatusKeeper: Tower state
+DefenceTower2 -> DefenceTower2: Tick
+DefenceTower2 -> StatusKeeper: Tower state
+GameEngine -> StatusKeeper: Tactical situation
+UiUpdater -> UiUpdater: Tick
+UiUpdater -> StatusKeeper: Ask for state
+UiUpdater <- StatusKeeper: Current state
+CliUi -> CliUi: Tick
+CliUi -> StatusKeeper: Ask for state
+CliUi <- StatusKeeper: Current state
+end
+
+@enduml

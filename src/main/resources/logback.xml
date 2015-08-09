@@ -1,0 +1,36 @@
+<configuration debug="false">
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>error</level>
+        </filter>
+        <encoder>
+            <pattern>%date{HH:mm:ss,SSS} %-5level %logger{0} [%X{akkaSource}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+
+    <!--<appender name="SOCKET" class="pl.otros.logback.socket.OtrosSocketAppender">-->
+        <!--<remoteHost>localhost</remoteHost>-->
+        <!--<port>5000</port>-->
+        <!--<includeCallerData>true</includeCallerData>-->
+    <!--</appender>-->
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>rmd-${PORT}.log</file>
+        <append>false</append>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread] %logger - %msg%n</pattern>
+        </layout>
+    </appender>
+    <appender name="FILE_ASYNC" class="ch.qos.logback.classic.AsyncAppender" queueSize="1024">
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <root level="debug">
+        <appender-ref ref="console"/>
+        <!--<appender-ref ref="SOCKET"/>-->
+        <appender-ref ref="FILE_ASYNC"/>
+    </root>
+
+</configuration>
