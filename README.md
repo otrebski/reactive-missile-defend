@@ -1,4 +1,6 @@
 # Reactive Missile Defend
+
+[https://rawgit.com/otrebski/reactive-missile-defend/master/doc/reactivemissledefend.html#slide-0](Slides from Krakow Scala User Group)
 # How cluster look like #
 Cluster should have following nodes:
 
