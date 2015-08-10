@@ -17,11 +17,11 @@ participant DefenceTower1
 participant DefenceTower2
 group Reporting
 GameEngine -> GameEngine: Tick
+GameEngine -> StatusKeeper: Tactical situation
 DefenceTower1 -> DefenceTower1: Tick
 DefenceTower1 -> StatusKeeper: Tower state
 DefenceTower2 -> DefenceTower2: Tick
 DefenceTower2 -> StatusKeeper: Tower state
-GameEngine -> StatusKeeper: Tactical situation
 UiUpdater -> UiUpdater: Tick
 UiUpdater -> StatusKeeper: Ask for state
 UiUpdater <- StatusKeeper: Current state
