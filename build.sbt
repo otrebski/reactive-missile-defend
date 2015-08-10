@@ -1,3 +1,5 @@
+import sbt.IvyConsole.Dependencies
+
 lazy val missleDefend = project in file(".")
 
 enablePlugins(JavaAppPackaging)
@@ -6,7 +8,7 @@ enablePlugins(LinuxPlugin)
 
 enablePlugins(LauncherJarPlugin)
 
-name := "missleDefend"
+name := "missileDefend"
 
 //fat jar
 
@@ -14,7 +16,7 @@ mainClass in assembly := some("defend.Boot")
 
 mainClass in Compile := Some(" defend.Boot")
 
-assemblyJarName := "reactive_missle_defend.jar"
+assemblyJarName := "reactive_missile_defend.jar"
 
 //fat jar -end
 
