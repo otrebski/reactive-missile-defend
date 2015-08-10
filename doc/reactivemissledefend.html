@@ -136,6 +136,7 @@
     <h2>What is next?</h2>
     <ol>
       <li>Upgrade to Akka 2.4</li>
+      <li>Separate GameEngine actor from Swing-UI, so cluster split can be demonstrate easily</li>
       <li>Try to use other cluster features like Akka Distributed Data or Pub-sub</li>
       <li>Have more fun with application</li>
     </ol>
@@ -143,11 +144,11 @@
   </section>
 
   <section class="slide">
-    <h3>How to run</h3>
+    <h3>How to run demo on your own laptop</h3>
     <pre>
     <code>
-#Clone project from github:
-$ git clone .....
+#Clone project from GitHub:
+$ git clone https://github.com/otrebski/reactive-missile-defend.git
 
 #Run shared journal
 $ export SEED_NODE=akka.tcp://defend@localhost:3000; export HOST=localhost;export PORT=3000; sbt sj &#x21B5;
@@ -157,6 +158,9 @@ $ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3001; sbt ui 
 
 #Run Command Center's node
 $ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3002 sbt cc &#x21B5;
+
+#Run another Command Center's node
+$ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3003 sbt cc &#x21B5;
     </code>
     </pre>
 
