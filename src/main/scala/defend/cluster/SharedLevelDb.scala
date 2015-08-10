@@ -16,11 +16,11 @@ trait SharedLevelDb {
     println(s"Started store actor $of".green)
   }
 
-  def setuppSharedJournalOnRemote(path: ActorPath, system: ActorSystem): Unit = {
+  def setupSharedJournalOnRemote(path: ActorPath, system: ActorSystem): Unit = {
     // Start the shared journal one one node (don't crash this SPOF)
     // This will not be needed with a distributed journal
     println("Startup shared journal".green)
-    println(s"Shared journal path is $path".onGreen)
+//    println(s"Shared journal path is $path".onGreen)
     // register the shared journal
     import system.dispatcher
     implicit val timeout = Timeout(15.seconds)
