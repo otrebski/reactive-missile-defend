@@ -41,7 +41,7 @@ object Dependencies {
 
   import Library._
 
-  val akkaShard = List(
+  val missileDefend = List(
     akkaCluster,
     akkaContrib,
     akkaPersistence,
