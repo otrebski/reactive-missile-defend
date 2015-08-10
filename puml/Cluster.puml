@@ -13,7 +13,7 @@
 (CLI UI\n run ""sbt cliui"") as cliui
 (Shared Journal\n run ""sbt sj"") as (sj)
 
-(Command center 1\n <color blue>[cluster leader]</color>\n<color brown>StatusKeeper\nTower1\nTower12) as (cc1)
+(Command center 1\n <color blue>StatusKeeper\nTower1\nTower12) as (cc1)
 (Command center 2\n Tower11\nTower2\nTower4\nrun ""sbt cc"") as (cc2)
 (Command center 3\n Tower7\nTower5\nTower3\nrun ""sbt cc"") as (cc3)
 (Command center 4\n Tower8\nTower11\nTower9\nrun ""sbt cc"") as (cc4)

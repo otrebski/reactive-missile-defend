@@ -18,7 +18,7 @@
   <link rel="stylesheet" media="screen" href="extensions/scale/deck.scale.css">
 
   <!-- Style theme. More available in /themes/style/ or create your own. -->
-  <link rel="stylesheet" media="screen" href="themes/style/neon.css">
+  <link rel="stylesheet" media="screen" href="themes/style/swiss.css">
 
   <!-- Transition theme. More available in /themes/transition/ or create your own. -->
   <link rel="stylesheet" media="screen" href="themes/transition/fade.css">
@@ -55,6 +55,13 @@
     </blockquote>
     <div align="right">Krzysztof Otrębski @kotrebski</div>
   </section>
+
+  <section class="slide">
+      <h2>Goals</h2>
+      <div>Details of code are not important.</div>
+      <div>I want you to get a grip how akka cluster works.</div>
+  </section>
+
   <section class="slide">
     <h1>Aliens !!!</h1>
     <img src="images/alien-308429_1280.png">
@@ -119,8 +126,9 @@
     <ol>
       <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> works</li>
       <li>What for you need <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> and <a href="http://doc.akka.io/docs/akka/snapshot/scala/persistence.html">persistent actors</a></li>
+      <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">Cluster singleton</a> works and you can expect</li>
       <li>It's good run failover tests before going on <a href="http://blog.codinghorror.com/new-programming-jargon/">protoduction</a></li>
-      <li>Close your nodes gracefully with <code>actorSystem.shutdown()</code></li>
+      <li>Close your nodes gracefully with <code>actorSystem.shutdown()</code> and leave cluster with <code>Cluster(actorSystem).leave()</code></li>
     </ol>
 
   </section>
