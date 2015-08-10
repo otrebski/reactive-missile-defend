@@ -1,5 +1,3 @@
-import sbt.IvyConsole.Dependencies
-
 lazy val missleDefend = project in file(".")
 
 enablePlugins(JavaAppPackaging)
@@ -22,7 +20,7 @@ assemblyJarName := "reactive_missile_defend.jar"
 
 Common.settings
 
-libraryDependencies ++= Dependencies.akkaShard
+libraryDependencies ++= Dependencies.missileDefend
 
 initialCommands := """|import akka.actor._
                      |import akka.actor.ActorDSL._

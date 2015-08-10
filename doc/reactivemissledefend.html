@@ -58,8 +58,8 @@
 
   <section class="slide">
       <h2>Goals</h2>
-      <div>Details of code are not important.</div>
-      <div>I want you to get a grip how akka cluster works.</div>
+      <div>Details of the code are not important.</div>
+      <div>I want you to get an idea how akka cluster works.</div>
   </section>
 
   <section class="slide">
@@ -85,13 +85,13 @@
 
 
   <section class="slide">
-    <h2>What is cluster?</h2>
-    <div>Bunch of actor systems (nodes) with connectivity and knowledge about other nodes</div>
+    <h2>What is a cluster?</h2>
+    <div>It's a bunch of actor systems (nodes) with connectivity, which know about other nodes</div>
   </section>
 
 
   <section class="slide">
-    <h2>Structure of the cluster</h2>
+    <h2>The structure of the cluster</h2>
     <img src="images/Cluster.svg" alt="Cluster overview">
   </section>
 
@@ -117,17 +117,18 @@
     *It can be too short to use on PROD, but good for having this presentation
   </section>
   <section class="slide">
-    <h1>Let see some action</h1>
+    <h1>Let's see some action</h1>
   </section>
 
 
   <section class="slide">
-    <h2>What do you know now?</h2>
+    <h2>What you know now:</h2>
     <ol>
       <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> works</li>
-      <li>What for you need <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> and <a href="http://doc.akka.io/docs/akka/snapshot/scala/persistence.html">persistent actors</a></li>
-      <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">Cluster singleton</a> works and you can expect</li>
-      <li>It's good run failover tests before going on <a href="http://blog.codinghorror.com/new-programming-jargon/">protoduction</a></li>
+      <li>What you need <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> and <a
+              href="http://doc.akka.io/docs/akka/snapshot/scala/persistence.html">persistent actors</a> for </li>
+      <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">Cluster singleton</a> works and what to expect</li>
+      <li>It's good to run failover tests before going on <a href="http://blog.codinghorror.com/new-programming-jargon/">protoduction</a></li>
       <li>Close your nodes gracefully with <code>actorSystem.shutdown()</code> and leave cluster with <code>Cluster(actorSystem).leave()</code></li>
     </ol>
 
@@ -136,15 +137,16 @@
     <h2>What is next?</h2>
     <ol>
       <li>Upgrade to Akka 2.4</li>
-      <li>Separate GameEngine actor from Swing-UI, so cluster split can be demonstrate easily</li>
+      <li>Separate GameEngine actor from Swing-UI, so the cluster split can be demonstrated easily</li>
       <li>Try to use other cluster features like Akka Distributed Data or Pub-sub</li>
-      <li>Have more fun with application</li>
+        <li>Create multi-node tests</li>
+      <li>Have more fun with the application</li>
     </ol>
 
   </section>
 
   <section class="slide">
-    <h3>How to run demo on your own laptop</h3>
+    <h3>How to run this demo on your own laptop</h3>
     <pre>
     <code>
 #Clone project from GitHub:
