@@ -20,7 +20,6 @@ trait Terminal {
   object CommandParser extends RegexParsers {
 
     def parseAsCommand(s: String, parser: CommandParser.Parser[Command]): Command = {
-      println(s"Parsing command $s with parser $parser.")
       parseAll(parser, s) match {
         case Success(command, _)   => command
         case NoSuccess(message, _) => Command.Unknown(s, message)
