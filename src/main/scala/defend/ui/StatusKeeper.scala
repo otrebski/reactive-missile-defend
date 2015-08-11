@@ -1,8 +1,8 @@
 package defend.ui
 
 import akka.actor._
-import akka.cluster.ClusterEvent.{ MemberRemoved, MemberUp, ReachableMember, UnreachableMember }
-import akka.cluster.{ Cluster, ClusterEvent, Member }
+import akka.cluster.ClusterEvent.{MemberRemoved, MemberUp, ReachableMember, UnreachableMember}
+import akka.cluster.{Cluster, ClusterEvent}
 import akka.event.Logging.MDC
 import defend.model._
 import defend.ui.StatusKeeper.Protocol._
@@ -105,9 +105,6 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
 
         )
     }
-    //always Sort command centers by oldest one
-    val sortWith: List[Member] = Cluster(context.system).state.members.toList.sortWith((m1, m2) => m1.isOlderThan(m2))
-    val commandCenters1: List[CommandCenter] = sortWith.flatMap(x => commandCenters.get(x.address.toString))
 
     val now = timeProvider()
     val warTheater = WarTheater(
@@ -116,7 +113,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       alienWeapons   = alienMissiles,
       humanWeapons   = humanMissiles,
       landScape      = landscape.getOrElse(LandScape(100, 100, 50)),
-      commandCentres = commandCenters1,
+      commandCentres = commandCenters.values.toList,
       explosions     = currentExplosions.map(e => ExplosionEvent(e, 1f)) :::
         previousExplosions.map(x => ExplosionEvent(x._1, 1 - (now - x._2) / explosionsDuration.toFloat)),
       points         = points,
