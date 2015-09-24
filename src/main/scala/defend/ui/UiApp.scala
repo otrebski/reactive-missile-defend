@@ -44,7 +44,9 @@ object UiApp extends SimpleSwingApplication
     private val buttonStart = new Button {
       text = "Start game"
     }
-    private val defenceLayout = new ComboBox[String](List("Standard", "Low defence", "High defence", "test"))
+    private val LayoutTest: String = "test"
+    private val LayoutTest_2: String = "test-2"
+    private val defenceLayout = new ComboBox[String](List("Standard", "Low defence", "High defence", LayoutTest, LayoutTest_2))
     private val attackMode = new ComboBox[String](List("Standard-random", "Top drop", "Intelligent wave", "Test"))
     private val showGrid = new CheckBox("Show grid")
     showGrid.selected = jWarTheater.showGrid
@@ -66,9 +68,13 @@ object UiApp extends SimpleSwingApplication
           case "Standard"     => generateCityAndDefence(landScape.width, landScape.groundLevel, 30, 4, towerNamePrefix)
           case "Low defence"  => generateCityAndDefence(landScape.width, landScape.groundLevel, 50, 2, towerNamePrefix)
           case "High defence" => generateCityAndDefence(landScape.width, landScape.groundLevel, 20, 6, towerNamePrefix)
-          case "test" => (
+          case LayoutTest => (
             List(City("A", Position(300, landScape.groundLevel), 100)),
-            List(200, 400, 600).map(x => DefenceTower(s"T$x", Position(x, landScape.groundLevel)))
+            List(200, 400, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
+          )
+          case LayoutTest_2 => (
+            List(City("A", Position(300, landScape.groundLevel), 100)),
+            List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
           )
         }
         val waveGenerator = attackMode.selection.item match {

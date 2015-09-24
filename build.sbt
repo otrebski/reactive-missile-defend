@@ -6,6 +6,7 @@ enablePlugins(LinuxPlugin)
 
 enablePlugins(LauncherJarPlugin)
 
+
 name := "missileDefend"
 
 //fat jar

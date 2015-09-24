@@ -1,8 +1,8 @@
 package defend.ui
 
 import akka.actor._
-import akka.cluster.ClusterEvent.{MemberRemoved, MemberUp, ReachableMember, UnreachableMember}
-import akka.cluster.{Cluster, ClusterEvent}
+import akka.cluster.ClusterEvent.{ MemberRemoved, MemberUp, ReachableMember, UnreachableMember }
+import akka.cluster.{ Cluster, ClusterEvent }
 import akka.event.Logging.MDC
 import defend.model._
 import defend.ui.StatusKeeper.Protocol._
