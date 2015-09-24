@@ -81,7 +81,7 @@ object UiApp extends SimpleSwingApplication
           case "Standard-random"  => new StandardRandomWaveGenerator()
           case "Top drop"         => new RainWaveGenerator()
           case "Intelligent wave" => new IntelligentWaveGenerator()
-          case _                  => new TestWaveGenerator()
+          case _                  => new TestWaveGenerator(quietPeriod = 5000)
         }
 
         gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy)))

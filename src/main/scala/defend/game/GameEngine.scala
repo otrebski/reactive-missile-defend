@@ -116,10 +116,10 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
 
       lastTimestamp = now
 
-      index = index+1
+      index = index + 1
       defence.foreach { t =>
         log.debug(s"Notify tower $t")
-        val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(index,t, alienWeaponsInAction, landScape))
+        val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(index, t, alienWeaponsInAction, landScape))
         towerShard ! envelope
       }
 

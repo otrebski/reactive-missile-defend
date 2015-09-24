@@ -177,7 +177,7 @@ case object TowerActor {
 
     case class ExperienceGained(exp: Int)
 
-    case class Situation(index:Int,me: DefenceTower, target: List[WeaponInAction[AlienWeapon]], landScape: LandScape)
+    case class Situation(index: Int, me: DefenceTower, target: List[WeaponInAction[AlienWeapon]], landScape: LandScape)
 
     case class MessageOfDeath(alienEmp: AlienEmp, secondsToCure: Int = 4)
 
