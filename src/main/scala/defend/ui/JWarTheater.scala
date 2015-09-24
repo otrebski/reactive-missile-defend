@@ -478,11 +478,14 @@ class JWarTheater(
   implicit def doubleToIn(d: Double): Int = d.toInt
 
   def clusterAddressToHostPort(address: String): String = {
-    if (address.matches(".*@.*:.*"))
-      address
-        .substring(address.indexOf('@') + 1)
-        .substring(0, address.substring(address.indexOf('@') + 1).indexOf(':'))
-    else {
+    //akka.tcp://defend@127.0.0.1:3002
+    if (address.matches(".*@.*:.*")) {
+      val split = address.split("[@:]")
+      split(2) match {
+        case "127.0.0.1" => s"port ${split(3)}"
+        case _           => split(2)
+      }
+    } else {
       address
     }
   }
@@ -547,6 +550,7 @@ object JWarTheater extends SimpleSwingApplication {
       case 6 => DefenceTowerInfected
       case _ => DefenceTowerReady
     }
+
     private val towerStatuses: List[DefenceTowerStatus] = defence.zipWithIndex.map(t =>
       DefenceTowerStatus(
         defenceTower         = t._1,
