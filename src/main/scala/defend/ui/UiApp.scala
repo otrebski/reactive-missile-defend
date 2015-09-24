@@ -73,7 +73,7 @@ object UiApp extends SimpleSwingApplication
             List(200, 400, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
           )
           case LayoutTest_2 => (
-            List(City("A", Position(300, landScape.groundLevel), 100)),
+            List(City("A", Position(350, landScape.groundLevel), 100)),
             List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
           )
         }
