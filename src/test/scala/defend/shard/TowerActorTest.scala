@@ -106,6 +106,6 @@ class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("a
 
   override protected def afterAll(): Unit = {
     super.afterAll()
-    system.shutdown()
+    system.terminate()
   }
 }

@@ -1,8 +1,8 @@
 package defend.shard
 
-import akka.actor.{ DiagnosticActorLogging, ActorRef, FSM, Props }
+import akka.actor.{ ActorRef, DiagnosticActorLogging, FSM, Props }
 import akka.cluster.Cluster
-import akka.contrib.pattern.ShardRegion
+import akka.cluster.sharding.ShardRegion
 import akka.event.Logging.MDC
 import akka.persistence.{ PersistentActor, RecoveryCompleted, SnapshotOffer, SnapshotSelectionCriteria }
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -10,11 +10,11 @@ import defend._
 import defend.model._
 import defend.shard.TowerActor.Protocol._
 import defend.ui.StatusKeeper
+import pl.project13.scala.rainbow.Rainbow._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Random
-import pl.project13.scala.rainbow.Rainbow._
 
 sealed trait TowerState
 
@@ -190,17 +190,15 @@ case object TowerActor {
   def props(
     statusKeeper: ActorRef,
     reloadTime:   FiniteDuration = 2 seconds
-  ): Props =
-    Props(new TowerActor(statusKeeper, reloadTime))
+  ): Props = Props(new TowerActor(statusKeeper, reloadTime))
 
-  val idExtractor: ShardRegion.IdExtractor = {
-    case e @ Envelope(id, payload) =>
-      (id, payload)
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case Envelope(id, payload) ⇒ (id.toString, payload)
   }
 
-  def shardResolver(shardCount: Int = 10): ShardRegion.ShardResolver = {
-    case Envelope(id, m) =>
-      id.hashCode.%(shardCount).toString
+  def shardResolver(shardCount: Int = 40): ShardRegion.ExtractShardId = {
+    case Envelope(id, m) => id.hashCode.%(shardCount).toString
+    //      case _=> ""
   }
 
 }

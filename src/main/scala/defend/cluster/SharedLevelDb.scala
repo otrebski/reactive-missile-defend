@@ -33,12 +33,12 @@ trait SharedLevelDb {
         system.log.error("Shared journal not started at {}", path)
         println(s"Shared journal not started at $path".red)
         println(s"Received: $m")
-        system.shutdown()
+        system.terminate()
     }
     f.onFailure {
       case _ =>
         println(s"Lookup of shared journal at $path timed out".red)
-        system.shutdown()
+        system.terminate()
     }
   }
 }

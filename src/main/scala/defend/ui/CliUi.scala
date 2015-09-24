@@ -5,7 +5,7 @@ import java.util.Date
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.contrib.pattern.ClusterSingletonProxy
+import akka.cluster.singleton.{ ClusterSingletonProxy, ClusterSingletonProxySettings }
 import akka.event.Logging.MDC
 import com.typesafe.config.{ Config, ConfigFactory }
 import defend.cluster.SharedJournalSetter
@@ -20,11 +20,12 @@ object CliUi extends App {
   private val config: Config = ConfigFactory.load()
   val system: ActorSystem = ActorSystem("defend", config)
   system.actorOf(Props[SharedJournalSetter])
-
-  val statusKeeper = system.actorOf(
+  private lazy val settings: ClusterSingletonProxySettings =
+    ClusterSingletonProxySettings(system).withSingletonName("statusKeeper")
+  lazy val statusKeeper = system.actorOf(
     ClusterSingletonProxy.props(
-      singletonPath = "/user/singleton/statusKeeper",
-      role          = None
+      singletonManagerPath = "/user/singleton/",
+      settings             = settings
     ),
     name = "statusKeeperProxy"
   )

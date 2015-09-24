@@ -35,7 +35,7 @@ object DefenceCommandCenter extends App
     Command(StdIn.readLine(), parser) match {
       case Command.Shutdown =>
         println("Shutting down".green)
-        system.shutdown()
+        system.terminate()
       case Command.Leave =>
         println("Leaving cluster".green)
         cluster.leave(cluster.selfAddress)

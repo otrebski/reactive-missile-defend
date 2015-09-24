@@ -106,7 +106,7 @@ object UiApp extends SimpleSwingApplication
     contents = bp
 
     override def closeOperation() = {
-      system.shutdown()
+      system.terminate()
       System.exit(0)
     }
   }

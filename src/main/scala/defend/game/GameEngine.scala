@@ -2,7 +2,7 @@ package defend.game
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.contrib.pattern.ClusterSharding
+import akka.cluster.sharding.ClusterSharding
 import akka.event.Logging.MDC
 import defend._
 import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick }

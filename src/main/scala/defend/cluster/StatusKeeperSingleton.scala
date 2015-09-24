@@ -1,21 +1,18 @@
 package defend.cluster
 
 import akka.actor.{ ActorSystem, PoisonPill }
-import akka.contrib.pattern.ClusterSingletonManager
+import akka.cluster.singleton.{ ClusterSingletonManager, ClusterSingletonManagerSettings }
 import defend.ui.StatusKeeper
-
 import pl.project13.scala.rainbow.Rainbow._
+
 trait StatusKeeperSingleton {
 
   println("Creating status keeper".green)
   val system: ActorSystem
-  val statusKeeperSingleton = system.actorOf(
-    ClusterSingletonManager.props(
-      singletonProps     = StatusKeeper.props(),
-      singletonName      = "statusKeeper",
-      terminationMessage = PoisonPill,
-      role               = None
-    ),
-    name = "singleton"
+  val props = ClusterSingletonManager.props(
+    singletonProps     = StatusKeeper.props(),
+    terminationMessage = PoisonPill,
+    settings           = ClusterSingletonManagerSettings(system).withSingletonName("statusKeeper")
   )
+  val statusKeeperSingleton = system.actorOf(props, name = "singleton")
 }

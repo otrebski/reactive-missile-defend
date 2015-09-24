@@ -2,7 +2,7 @@ import sbt._
 
 object Version {
 
-  val akka = "2.3.8"
+  val akka = "2.4.0-RC3"
   val akkaDataReplication = "0.6"
   val logback = "1.1.3"
   val scala = "2.11.7"
@@ -16,8 +16,10 @@ object Version {
 object Library {
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % Version.akka
   val akkaCluster = "com.typesafe.akka" %% "akka-cluster" % Version.akka
+  val akkaClusterSharding = "com.typesafe.akka" %% "akka-cluster-sharding" % Version.akka
+  val akkaClusterTools ="com.typesafe.akka" %% "akka-cluster-tools" % Version.akka
   val akkaContrib = "com.typesafe.akka" %% "akka-contrib" % Version.akka
-  val akkaPersistence = "com.typesafe.akka" %% "akka-persistence-experimental" % Version.akka
+  val akkaPersistence = "com.typesafe.akka" %% "akka-persistence" % Version.akka
   val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akka
   val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % Version.akka
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging-slf4j" % Version.scalaLogging
@@ -43,6 +45,8 @@ object Dependencies {
 
   val missileDefend = List(
     akkaCluster,
+    akkaClusterTools,
+    akkaClusterSharding,
     akkaContrib,
     akkaPersistence,
     akkaSlf4j,
