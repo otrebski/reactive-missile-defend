@@ -28,6 +28,7 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
   private val towerShard: ActorRef = ClusterSharding(context.system).shardRegion(TowerActor.shardRegion)
   private val towerPings: List[Cancellable] = defence.map(d => context.system.scheduler.schedule(10 millis, 100 millis, towerShard, Envelope(d.name, TowerActor.Protocol.Ping)))
   private val selfAddress: Address = Cluster(context.system).selfAddress
+  private var index = 0
 
   override def mdc(currentMessage: Any): MDC = {
     Map("node" -> selfAddress)
@@ -115,9 +116,10 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
 
       lastTimestamp = now
 
+      index = index+1
       defence.foreach { t =>
         log.debug(s"Notify tower $t")
-        val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(t, alienWeaponsInAction, landScape))
+        val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(index,t, alienWeaponsInAction, landScape))
         towerShard ! envelope
       }
 

@@ -46,7 +46,7 @@ class TowerActor(
 
   when(Ready) {
     case Event(s: Situation, state) =>
-      log.debug("Received situation, trying to find enemy rocket to intercept")
+      log.debug(s"Received situation, ${s.index} (running on $commandCenterName)")
       val level = experienceToLevel(state.experience)
       val speed: Double = 70 + level * 30 + Random.nextInt(30)
       val range: Double = rangeForLevel(experienceToLevel(state.experience))
@@ -177,7 +177,7 @@ case object TowerActor {
 
     case class ExperienceGained(exp: Int)
 
-    case class Situation(me: DefenceTower, target: List[WeaponInAction[AlienWeapon]], landScape: LandScape)
+    case class Situation(index:Int,me: DefenceTower, target: List[WeaponInAction[AlienWeapon]], landScape: LandScape)
 
     case class MessageOfDeath(alienEmp: AlienEmp, secondsToCure: Int = 4)
 
