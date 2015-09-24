@@ -19,7 +19,7 @@ class TestWaveGenerator(quietPeriod: Long = 20000) extends WaveGenerator {
         val start = Position(Random.nextInt(landScape.width - spaceBetween * waveWidth), landScape.height)
         val end = start.copy(y = landScape.groundLevel)
 
-        val baseSpeed: Double = 10 + Random.nextInt(10)
+        val baseSpeed: Double = 30 + Random.nextInt(30)
         val moveVector: MoveVector = calculateDirection(start, end).copy(speed = baseSpeed)
         val weapons = (0 until waveWidth).map {
           i =>
