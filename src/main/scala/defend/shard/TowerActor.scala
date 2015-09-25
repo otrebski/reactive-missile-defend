@@ -160,7 +160,7 @@ class TowerActor(
     case a: Any => println(s"$persistenceId command $a")
   }
 
-  override def persistenceId: String = self.path.parent.name + "-" + self.path.name
+  override def persistenceId: String = self.path.parent.parent.name
 
   override def mdc(currentMessage: Any): MDC = {
     Map[String, Any]("tower" -> persistenceId, "node" -> commandCenterName)
