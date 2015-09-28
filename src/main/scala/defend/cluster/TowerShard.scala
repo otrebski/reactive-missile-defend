@@ -14,7 +14,7 @@ trait TowerShard {
       entityProps     = TowerActor.props(statusKeeperProxy),
       settings        = ClusterShardingSettings(system),
       extractEntityId = TowerActor.extractEntityId,
-      extractShardId  = TowerActor.shardResolver()
+      extractShardId  = TowerActor.extractShardId
     )
   }
 

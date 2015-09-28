@@ -5,20 +5,20 @@ import akka.testkit.{ TestKit, TestProbe }
 import com.typesafe.config.ConfigFactory
 import defend.game.GameEngine.Protocol.RocketFired
 import defend.model._
-import defend.shard.TowerActor.Protocol.{ ExperienceGained, Ping, Situation }
+import defend.shard.TowerActor.Protocol.{ExperienceGained, Ping, Situation}
 import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
 import org.scalatest.{ BeforeAndAfterAll, Matchers, WordSpecLike }
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("application-test.conf"))) with WordSpecLike with Matchers with BeforeAndAfterAll {
+class TowerFsmActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("application-test.conf"))) with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   private val tower: DefenceTower = DefenceTower("A", Position(0, 0))
-  private val situation: Situation = Situation(tower, Nil, LandScape(200, 100, 50))
-  private val situationWithIncommming: Situation = Situation(tower, List(WeaponInAction(AlienBomb(1, 1), Position(10, 100), MoveVector(0, 0))), LandScape(200, 100, 50))
+  private val situation: Situation = Situation(0,tower, Nil, LandScape(200, 100, 50))
+  private val situationWithIncoming: Situation = Situation(1,tower, List(WeaponInAction(AlienBomb(1, 1), Position(10, 100), MoveVector(0, 0))), LandScape(200, 100, 50))
 
-  "TowerActor" should {
+  "TowerFsmActor" should {
 
     "start with ready" in {
 
@@ -46,7 +46,7 @@ class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("a
 
       val underTest = system.actorOf(props)
 
-      underTest.tell(situationWithIncommming, situationSender.ref)
+      underTest.tell(situationWithIncoming, situationSender.ref)
       underTest ! Ping
 
       statusKeeper.fishForMessage(1 second) {
@@ -54,7 +54,7 @@ class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("a
         case DefenceTowerStatus(_, DefenceTowerReloading, true, _, _, _) => true
       }
 
-      underTest.tell(situationWithIncommming, situationSender.ref)
+      underTest.tell(situationWithIncoming, situationSender.ref)
       underTest ! Ping
 
       statusKeeper.fishForMessage(1 second) {

@@ -57,6 +57,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       points = m.points.getOrElse(points)
 
     case m: TowerKeepAlive =>
+      log.info(s"Received keepAlive from ${m.id}: $m")
       towersLastKeepAlive = towersLastKeepAlive.updated(m.id, timeProvider())
       defenceTowersStatus.get(m.id)
         .orElse(Some(DefenceTowerStatus(DefenceTower(m.id, Position(0, 0)), m.towerState, isUp = true, Some(m.commandCenterName), m.level)))
