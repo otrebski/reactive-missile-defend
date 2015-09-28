@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import scala.io.StdIn
 
 object DefenceCommandCenter extends App
+    with Roles.CommandCenterRole
     with SharedLevelDb
     with DefendActorSystem
     with StatusKeeperSingleton

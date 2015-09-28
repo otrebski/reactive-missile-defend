@@ -1,18 +1,18 @@
 package defend.cluster
 
 import akka.actor.{ ActorRef, ActorSystem }
-import akka.cluster.sharding.{ ClusterSharding, ClusterShardingSettings }
+import akka.cluster.sharding.ClusterSharding
 import defend.shard.TowerActor
-trait TowerShard {
+
+trait TowerShardProxy {
 
   val statusKeeperProxy: ActorRef
   val system: ActorSystem
 
-  val towerShard: ActorRef = {
-    ClusterSharding(system).start(
+  val towerShardProxy: ActorRef = {
+    ClusterSharding(system).startProxy(
       typeName        = TowerActor.shardRegion,
-      entityProps     = TowerActor.props(statusKeeperProxy),
-      settings        = ClusterShardingSettings(system).withRole(Some(Roles.Tower)),
+      role            = Some(Roles.Tower),
       extractEntityId = TowerActor.extractEntityId,
       extractShardId  = TowerActor.extractShardId
     )

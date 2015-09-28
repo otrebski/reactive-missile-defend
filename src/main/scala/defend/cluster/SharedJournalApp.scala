@@ -13,7 +13,6 @@ object SharedJournalApp extends App
     with DefendActorSystem
     with StatusKeeperSingleton
     with StatusKeeperProxy
-    with TowerShard
     with LazyLogging {
 
   logger.info("Starting Shared Journal APP")
@@ -23,31 +22,6 @@ object SharedJournalApp extends App
   startJournal(system)
 
   system.actorOf(Props[SharedJournalSetter])
-  //  println(s"Shared journal started".green)
-  //  system.actorOf(
-  //    ClusterSingletonManager.props(
-  //      singletonProps     = StatusKeeper.props(),
-  //      singletonName      = "statusKeeper",
-  //      terminationMessage = PoisonPill,
-  //      role               = None
-  //    ),
-  //    name = "singleton"
-  //  )
-  //
-  //  val statusKeeper = system.actorOf(
-  //    ClusterSingletonProxy.props(
-  //      singletonPath = "/user/singleton/statusKeeper",
-  //      role          = None
-  //    ),
-  //    name = "statusKeeperProxy"
-  //  )
-
-  //  ClusterSharding(system).start(
-  //    TowerActor.shardRegion,
-  //    Some(TowerActor.props(statusKeeper)),
-  //    TowerActor.idExtractor,
-  //    TowerActor.shardResolver()
-  //  )
 
   val cm = system.actorOf(Props(new ClusterMonitor))
   Cluster(system).subscribe(cm, InitialStateAsEvents,

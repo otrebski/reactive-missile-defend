@@ -18,10 +18,9 @@ object UiApp extends SimpleSwingApplication
     with DefendActorSystem
     with StatusKeeperSingleton
     with StatusKeeperProxy
-    with TowerShard {
+    with TowerShardProxy {
 
   import pl.project13.scala.rainbow.Rainbow._
-
   println("Starting".green)
 
   private val duration: Long = config.as[FiniteDuration]("akka.cluster.auto-down-unreachable-after").toMillis
