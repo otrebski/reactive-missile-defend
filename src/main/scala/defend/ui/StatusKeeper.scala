@@ -4,6 +4,7 @@ import akka.actor._
 import akka.cluster.ClusterEvent.{ MemberRemoved, MemberUp, ReachableMember, UnreachableMember }
 import akka.cluster.{ Cluster, ClusterEvent }
 import akka.event.Logging.MDC
+import defend.cluster.Roles
 import defend.model._
 import defend.ui.StatusKeeper.Protocol._
 
@@ -68,20 +69,20 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
         }
       //update last message from defence tower
       commandCenters.get(m.commandCenterName).foreach(cc => commandCenters = commandCenters.updated(m.commandCenterName, cc.copy(lastMessageTimestamp = timeProvider())))
-    case m: MemberUp =>
+    case m: MemberUp if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
-    case m: MemberRemoved =>
+    case m: MemberRemoved if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOffline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOffline))
-    case m: UnreachableMember =>
+    case m: UnreachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterUnreachable, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterUnreachable))
 
-    case m: ReachableMember =>
+    case m: ReachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
