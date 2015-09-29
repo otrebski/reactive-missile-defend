@@ -49,7 +49,7 @@ object Dependencies {
     akkaClusterSharding,
     akkaContrib,
     akkaPersistence,
-    akkaSlf4j,
+//    akkaSlf4j,
     scalaSwing,
     scalaLogging,
     logbackClassic,
