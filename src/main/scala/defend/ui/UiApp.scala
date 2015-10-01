@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import akka.actor._
-import akka.cluster.Cluster
 import defend.cluster._
 import defend.game._
 import defend.model._
@@ -46,11 +45,7 @@ object UiApp extends SimpleSwingApplication
     override def apply(v1: String): Unit = {
       val path: String = s"$v1/user/shutdown"
       println(s"Will send shutdown to path $path")
-      val cluster: Cluster = Cluster(system)
-      cluster.state.members
-        .find(_.address.toString == v1)
-        .foreach(m => cluster.leave(m.address))
-      //      system.actorSelection(path) ! ShutdownNode.LeaveCluster
+      system.actorSelection(path) ! ShutdownNode.LeaveCluster
     }
   })
 
@@ -61,23 +56,12 @@ object UiApp extends SimpleSwingApplication
       system.actorSelection(path) ! ShutdownNode.SystemExit0
     }
   })
-  private val downNode = new CommandCenterPopupAction("Down node", new (String => Unit) {
-    override def apply(v1: String): Unit = {
-      val path: String = s"$v1/user/shutdown"
-      println(s"Will send shutdown to path $path")
-      //      system.actorSelection(path) ! ShutdownNode.DownNode
-      val cluster: Cluster = Cluster(system)
-      cluster.state.members
-        .find(_.address.toString == v1)
-        .foreach(m => cluster.down(m.address))
-    }
-  })
 
   private val jWarTheater: JWarTheater = new JWarTheater(emptyWarTheater, duration,
     showGrid                 = false,
     showTracks               = true,
     dragListener             = Some(dragFunction),
-    commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0, downNode))
+    commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0))
   private val uiUpdater = system.actorOf(UiUpdater.props(jWarTheater, statusKeeperProxy), "uiUpdater")
 
   override def top: Frame = new MainFrame {

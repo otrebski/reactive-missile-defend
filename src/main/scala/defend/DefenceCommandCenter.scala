@@ -16,13 +16,13 @@ object DefenceCommandCenter extends App
     with StatusKeeperSingleton
     with StatusKeeperProxy
     with TowerShard
-    with Terminal
-    with ShutdownNode {
+    with ShutdownNode
+    with Terminal {
 
   system.actorOf(Props[SharedJournalSetter])
 
   private val clusterMonitor: ActorRef = system.actorOf(Props(new ClusterMonitor))
-  private val cluster: Cluster = Cluster(system)
+  val cluster: Cluster = Cluster(system)
   cluster.subscribe(clusterMonitor, InitialStateAsEvents, classOf[ClusterDomainEvent])
   system.eventStream.subscribe(clusterMonitor, classOf[DeadLetter])
   println(" Defence started".green)

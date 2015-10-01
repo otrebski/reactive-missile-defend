@@ -1,7 +1,11 @@
 package defend.cluster
 
-import akka.actor.{ Actor, ActorSystem, Props }
+import akka.actor._
 import akka.cluster.Cluster
+import akka.cluster.sharding.ShardRegion
+import pl.project13.scala.rainbow.Rainbow._
+
+import scala.language.postfixOps
 
 trait ShutdownNode {
 
@@ -10,39 +14,39 @@ trait ShutdownNode {
   private val shutdown: String = "shutdown"
 
   system.actorOf(Props(new ShutdownActor), shutdown)
+  val towerShard: ActorRef
 
   class ShutdownActor extends Actor {
     override def receive: Receive = {
       case ShutdownNode.Terminate =>
-        import pl.project13.scala.rainbow.Rainbow._
         println("                                         ".onRed)
         println("   Have received command to terminate    ".onWhite.red)
         println("                                         ".onRed)
         system.terminate()
 
       case ShutdownNode.LeaveCluster =>
-        import pl.project13.scala.rainbow.Rainbow._
         println("                                             ".onRed)
         println("   Have received command to leave cluster    ".onWhite.red)
+        println("   Trying to do graceful leave               ".onWhite.red)
         println("                                             ".onRed)
-        val cluster: Cluster = Cluster(system)
-        cluster.leave(cluster.selfAddress)
+        context.watch(towerShard)
+        towerShard ! ShardRegion.GracefulShutdown
 
-      case ShutdownNode.DownNode =>
-        import pl.project13.scala.rainbow.Rainbow._
+      case Terminated(`towerShard`) ⇒
         println("                                             ".onRed)
-        println("   Have received command to down node        ".onWhite.red)
+        println("   Cluster region was terminated             ".onWhite.red)
+        println("   Terminate and leave                       ".onWhite.red)
         println("                                             ".onRed)
         val cluster: Cluster = Cluster(system)
-        cluster.down(cluster.selfAddress)
+        cluster.registerOnMemberRemoved(system.terminate())
 
       case ShutdownNode.SystemExit0 =>
-        import pl.project13.scala.rainbow.Rainbow._
         println("                                              ".onRed)
         println("   Have received command to System.exit(0)    ".onWhite.red)
         println("                                              ".onRed)
         System.exit(0)
 
+      case _: Any =>
     }
 
   }
@@ -52,8 +56,6 @@ trait ShutdownNode {
 object ShutdownNode {
 
   case object LeaveCluster
-
-  case object DownNode
 
   case object Terminate
 
