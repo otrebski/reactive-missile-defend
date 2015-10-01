@@ -12,7 +12,7 @@ import defend.shard.FsmProtocol.{ AddExperience, DomainEvent, ScheduledStateChan
 import defend.shard.TowerActor.Protocol.{ Ping, MessageOfDeath, Reloaded, Situation }
 import defend.ui.StatusKeeper
 import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
-
+import pl.project13.scala.rainbow.Rainbow._
 import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
@@ -64,10 +64,13 @@ class TowerActor(
 
   @throws[Exception](classOf[Exception]) override def preStart(): Unit = {
     log.info(s"Starting $persistenceId on $commandCenterName")
+    println(s"Starting $persistenceId on $commandCenterName".white.onBlue)
     super.preStart()
   }
 
-  override def persistenceId: String = self.path.parent.parent.name
+  override def persistenceId: String = {
+    self.path.name
+  }
 
   override def applyEvent(domainEvent: DomainEvent, currentData: TowerFsMData): TowerFsMData = domainEvent match {
     case AddExperience(exp) =>
