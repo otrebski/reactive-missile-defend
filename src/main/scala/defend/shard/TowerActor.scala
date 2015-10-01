@@ -62,6 +62,11 @@ class TowerActor(
   val nextLevelReduction = 0.05
   val commandCenterName = Cluster(context.system).selfAddress.toString
 
+  @throws[Exception](classOf[Exception]) override def preStart(): Unit = {
+    log.info(s"Starting $persistenceId on $commandCenterName")
+    super.preStart()
+  }
+
   override def persistenceId: String = self.path.parent.parent.name
 
   override def applyEvent(domainEvent: DomainEvent, currentData: TowerFsMData): TowerFsMData = domainEvent match {

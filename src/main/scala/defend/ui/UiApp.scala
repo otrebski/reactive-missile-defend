@@ -4,9 +4,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import akka.actor._
+import akka.cluster.Cluster
 import defend.cluster._
 import defend.game._
 import defend.model._
+import defend.ui.JWarTheater.CommandCenterPopupAction
 import net.ceedubs.ficus.Ficus._
 
 import scala.concurrent.duration.FiniteDuration
@@ -31,10 +33,51 @@ object UiApp extends SimpleSwingApplication
       gameEngine.filter(_ => v1.moveVector.speed > 10).foreach(_ ! GameEngine.Protocol.AlienRocketFired(AlienMissile(1, 10), v1.start, v1.moveVector, None))
     }
   }
+
+  private val terminateActorSystem = new CommandCenterPopupAction("Terminate actor system", new (String => Unit) {
+    override def apply(v1: String): Unit = {
+      val path: String = s"$v1/user/shutdown"
+      println(s"Will send shutdown to path $path")
+      system.actorSelection(path) ! ShutdownNode.Terminate
+    }
+  })
+
+  private val leaveCluster = new CommandCenterPopupAction("Leave cluster", new (String => Unit) {
+    override def apply(v1: String): Unit = {
+      val path: String = s"$v1/user/shutdown"
+      println(s"Will send shutdown to path $path")
+      val cluster: Cluster = Cluster(system)
+      cluster.state.members
+        .find(_.address.toString == v1)
+        .foreach(m => cluster.leave(m.address))
+      //      system.actorSelection(path) ! ShutdownNode.LeaveCluster
+    }
+  })
+
+  private val systemExit0 = new CommandCenterPopupAction("Call system exit(0)", new (String => Unit) {
+    override def apply(v1: String): Unit = {
+      val path: String = s"$v1/user/shutdown"
+      println(s"Will send shutdown to path $path")
+      system.actorSelection(path) ! ShutdownNode.SystemExit0
+    }
+  })
+  private val downNode = new CommandCenterPopupAction("Down node", new (String => Unit) {
+    override def apply(v1: String): Unit = {
+      val path: String = s"$v1/user/shutdown"
+      println(s"Will send shutdown to path $path")
+      //      system.actorSelection(path) ! ShutdownNode.DownNode
+      val cluster: Cluster = Cluster(system)
+      cluster.state.members
+        .find(_.address.toString == v1)
+        .foreach(m => cluster.down(m.address))
+    }
+  })
+
   private val jWarTheater: JWarTheater = new JWarTheater(emptyWarTheater, duration,
-    showGrid     = false,
-    showTracks   = true,
-    dragListener = Some(dragFunction))
+    showGrid                 = false,
+    showTracks               = true,
+    dragListener             = Some(dragFunction),
+    commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0, downNode))
   private val uiUpdater = system.actorOf(UiUpdater.props(jWarTheater, statusKeeperProxy), "uiUpdater")
 
   override def top: Frame = new MainFrame {
@@ -98,9 +141,15 @@ object UiApp extends SimpleSwingApplication
       contents += showTracks
       contents += buttonStart
     }
+
+    val toolbarSouth = new BoxPanel(Orientation.Horizontal) {
+      contents += new Label("Select node to drop")
+      contents += new Label("....")
+    }
     val bp = new BorderPanel {
       add(toolbar, BorderPanel.Position.North)
       add(jWarTheater, BorderPanel.Position.Center)
+      add(toolbarSouth, BorderPanel.Position.South)
     }
     contents = bp
 

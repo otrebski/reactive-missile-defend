@@ -16,7 +16,8 @@ object DefenceCommandCenter extends App
     with StatusKeeperSingleton
     with StatusKeeperProxy
     with TowerShard
-    with Terminal {
+    with Terminal
+    with ShutdownNode {
 
   system.actorOf(Props[SharedJournalSetter])
 

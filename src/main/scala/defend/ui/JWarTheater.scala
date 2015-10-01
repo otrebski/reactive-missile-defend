@@ -10,6 +10,7 @@ import javax.swing.Timer
 import defend._
 import defend.model._
 import defend.ui.CommandCenterIcons._
+import defend.ui.JWarTheater.CommandCenterPopupAction
 
 import scala.collection.immutable.Queue
 import scala.language.implicitConversions
@@ -17,13 +18,14 @@ import scala.swing._
 import scala.swing.event.{ MouseClicked, MousePressed, MouseReleased }
 
 class JWarTheater(
-  var warTheater:           WarTheater,
-  autoDownUnreachableAfter: Long,
-  var offlineSince:         Option[Long]                = None,
-  var showGrid:             Boolean                     = false,
-  var showTracks:           Boolean                     = false,
-  var dragListener:         Option[(DragEvent) => Unit] = None,
-  val timeProvider:         () => Long                  = System.currentTimeMillis
+  var warTheater:               WarTheater,
+  autoDownUnreachableAfter:     Long,
+  var offlineSince:             Option[Long]                   = None,
+  var showGrid:                 Boolean                        = false,
+  var showTracks:               Boolean                        = false,
+  var dragListener:             Option[(DragEvent) => Unit]    = None,
+  var commandCenterPopupAction: List[CommandCenterPopupAction] = List.empty,
+  val timeProvider:             () => Long                     = System.currentTimeMillis
 )
     extends Component {
 
@@ -60,7 +62,8 @@ class JWarTheater(
   private val selectedTowerInfoColor = new swing.Color(1f, 1f, 1f, 0.5f)
   listenTo(mouse.clicks)
 
-  var clickPoint: Option[Position] = None
+  private var clickPoint: Option[Position] = None
+  private var commandCenterOnScreen: Map[Rect, String] = Map.empty[Rect, String]
 
   reactions += {
     case a: MouseClicked =>
@@ -70,6 +73,24 @@ class JWarTheater(
           val p: Position = d.defenceTower.position
           closeEnough(p, Position(point.x, warTheater.landScape.height - point.y), 16)
       }
+
+      commandCenterOnScreen
+        .find(rn => rn._1.contains(a.point))
+        .map(_._2)
+        .foreach { name =>
+          val popup = new PopupMenu
+          commandCenterPopupAction.foreach { action =>
+            val item = new MenuItem(new Action(s"${action.name} $name") {
+              def apply = {
+                action.action.apply(name)
+              }
+            })
+            popup.contents += item
+          }
+
+          popup.show(this, a.point.x, a.point.y)
+        }
+
     case a: MousePressed =>
       clickPoint = Some(Position(a.point.x, warTheater.landScape.height - a.point.y))
     case a: MouseReleased =>
@@ -394,6 +415,8 @@ class JWarTheater(
       val icon: BufferedImage = iconForCommandCentre(center)
       val width = metrics.stringWidth(name) + serverIcon.getWidth * 5
       val r: Rect = Rect(xPos, scape.height - yPos, width, height)
+      commandCenterOnScreen = commandCenterOnScreen.updated(r, center.name)
+
       d.setColor(Color.BLACK)
       d.fillRect(r.x, r.y, r.width, r.height)
       val ts = timeProvider() - center.lastMessageTimestamp
@@ -492,7 +515,11 @@ class JWarTheater(
 
 }
 
-case class Rect(x: Int, y: Int, width: Int, height: Int)
+case class Rect(x: Int, y: Int, width: Int, height: Int) {
+  def contains(point: Point): Boolean = {
+    (point.x > x) && (point.x - x < width) && (point.y > y) && (point.y - y < height)
+  }
+}
 
 object JWarTheater extends SimpleSwingApplication {
   override def top: Frame = new MainFrame {
@@ -571,7 +598,12 @@ object JWarTheater extends SimpleSwingApplication {
     val timeProvider = new Function0[Long] {
       override def apply(): Long = 10004
     }
-    private val theater: JWarTheater = new JWarTheater(warTheater, 8 * 1000, Some(0), true, dragListener = Some(dragFun), timeProvider = timeProvider)
+    private val theater: JWarTheater = new JWarTheater(warTheater, 8 * 1000, Some(0), true,
+      dragListener             = Some(dragFun),
+      timeProvider             = timeProvider,
+      commandCenterPopupAction = List(new CommandCenterPopupAction("Some action on", new (String => Unit) {
+        override def apply(v1: String): Unit = println(s"Disconnecting $v1")
+      })))
     contents = new BoxPanel(Orientation.Vertical) {
       contents += theater
       border = Swing.EmptyBorder(30, 30, 10, 30)
@@ -626,4 +658,6 @@ object JWarTheater extends SimpleSwingApplication {
     }
   }
 
+  case class CommandCenterPopupAction(name: String, action: (String => Unit))
 }
+
