@@ -13,7 +13,7 @@ import defend.ui.CommandCenterIcons._
 import defend.ui.JWarTheater.CommandCenterPopupAction
 
 import scala.collection.immutable.Queue
-import scala.language.implicitConversions
+//import scala.language.implicitConversions
 import scala.swing._
 import scala.swing.event.{ MouseClicked, MousePressed, MouseReleased }
 
@@ -40,7 +40,8 @@ class JWarTheater(
   minimumSize = preferredSize
 
   private val debugFont: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
-  private val offlineFont: swing.Font = new swing.Font("Arial", Font.BOLD, 32)
+  private val offlineTowerFont: swing.Font = new swing.Font("Arial", Font.BOLD, 14)
+  private val offlineStatusKeeperFont: swing.Font = new swing.Font("Arial", Font.BOLD, 32)
   private val cityIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/city.png"))
   private val defenceIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tower_ready.png"))
   private val defenceIconOffline: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tower_offline.png"))
@@ -155,7 +156,7 @@ class JWarTheater(
         g.setColor(gray)
         g.fillRect(0, 0, landScape.width, landScape.height)
         g.setColor(Color.RED)
-        g.setFont(offlineFont)
+        g.setFont(offlineStatusKeeperFont)
         val string: String = f"Offline ${duration.toFloat / 1000}%.1fs"
         val x = landScape.width / 2 - g.getFontMetrics.stringWidth(string) / 2
         g.drawString(string, x, landScape.height / 2)
@@ -276,10 +277,11 @@ class JWarTheater(
         if (!t.isUp) {
           t.lastMessageTimestamp.foreach {
             ts =>
+              d.setFont(offlineTowerFont)
               val time = timeProvider() - ts
               val toDisplay: String = if (time > 100000) ">100s" else s"${time / 1000}s"
               val stringWidth: Int = d.getFontMetrics.stringWidth(toDisplay)
-              d.drawString(toDisplay, x - stringWidth / 2, landScape.height - y - d.getFontMetrics.getHeight - 5)
+              d.drawString(toDisplay, x - stringWidth / 2, landScape.height - y - d.getFontMetrics.getHeight - 10)
           }
         }
         //paint command center
@@ -595,7 +597,7 @@ object JWarTheater extends SimpleSwingApplication {
       override def apply(v1: DragEvent): Unit = {
       }
     }
-    val timeProvider = new Function0[Long] {
+    val timeProvider = new (() => Long) {
       override def apply(): Long = 10004
     }
     private val theater: JWarTheater = new JWarTheater(warTheater, 8 * 1000, Some(0), true,
