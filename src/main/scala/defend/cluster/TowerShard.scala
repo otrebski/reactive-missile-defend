@@ -9,7 +9,7 @@ trait TowerShard {
   val statusKeeperProxy: ActorRef
   val system: ActorSystem
 
-//  ClusterSharding.
+  //  ClusterSharding.
   println("Starting tower shard  ".white.onBlue)
   val settings: ClusterShardingSettings = ClusterShardingSettings(system).withRole(Some(Roles.Tower))
   val towerShard: ActorRef = {

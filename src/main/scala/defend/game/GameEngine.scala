@@ -13,7 +13,16 @@ import defend.shard.TowerActor.Protocol.MessageOfDeath
 import scala.concurrent.duration._
 import scala.language.{ implicitConversions, postfixOps }
 
-class GameEngine(var defence: List[DefenceTower], var city: List[City], landScape: LandScape, waveGenerator: WaveGenerator, statusKeeper: ActorRef) extends Actor with DiagnosticActorLogging {
+class GameEngine(
+  var defence:      List[DefenceTower],
+  var city:         List[City],
+  landScape:        LandScape,
+  waveGenerator:    WaveGenerator,
+  statusKeeper:     ActorRef,
+  gameOverCallback: Option[() => Unit]
+)
+    extends Actor
+    with DiagnosticActorLogging {
 
   private var lastTimestamp: Long = System.currentTimeMillis()
   private var alienWeaponsInAction = List.empty[WeaponInAction[AlienWeapon]]
@@ -152,6 +161,7 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
         context.system.scheduler.scheduleOnce(50 millis, self, Tick)
       } else {
         defence.foreach(t => towerShard ! Envelope(t.name, PoisonPill))
+        gameOverCallback.foreach(_.apply())
       }
   }
 
@@ -172,13 +182,14 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
 object GameEngine {
 
   def props(
-    defence:       List[DefenceTower],
-    city:          List[City],
-    landScape:     LandScape,
-    waveGenerator: WaveGenerator,
-    statusKeeper:  ActorRef
+    defence:          List[DefenceTower],
+    city:             List[City],
+    landScape:        LandScape,
+    waveGenerator:    WaveGenerator,
+    statusKeeper:     ActorRef,
+    gameOverCallback: Option[() => Unit]
   ) = {
-    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper)
+    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback)
   }
 
   case object Protocol {

@@ -10,7 +10,9 @@ import defend.model._
 import defend.ui.JWarTheater.CommandCenterPopupAction
 import net.ceedubs.ficus.Ficus._
 
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.FiniteDuration
+import scala.language.implicitConversions
 import scala.swing._
 import scala.swing.event.ButtonClicked
 
@@ -22,6 +24,7 @@ object UiApp extends SimpleSwingApplication
     with TowerShardProxy {
 
   import pl.project13.scala.rainbow.Rainbow._
+
   println("Starting".green)
 
   private val duration: Long = config.as[FiniteDuration]("akka.cluster.auto-down-unreachable-after").toMillis
@@ -70,6 +73,7 @@ object UiApp extends SimpleSwingApplication
     private val buttonStart = new Button {
       text = "Start game"
     }
+
     private val LayoutTest: String = "test"
     private val LayoutTest_2: String = "test-2"
     private val defenceLayout = new ComboBox[String](List("Standard", "Low defence", "High defence", LayoutTest, LayoutTest_2))
@@ -79,9 +83,14 @@ object UiApp extends SimpleSwingApplication
     private val showTracks = new CheckBox("Show tracks")
     showTracks.selected = jWarTheater.showTracks
 
+    private val statusLabel: Label = new Label("")
+    private var isOver: Boolean = true
+
     listenTo(buttonStart)
     listenTo(showGrid)
     listenTo(showTracks)
+
+    val f: () => Unit = { () => Swing.onEDT(gameFinished()) }
 
     reactions += {
       case bc: ButtonClicked if bc.source == buttonStart =>
@@ -110,7 +119,8 @@ object UiApp extends SimpleSwingApplication
           case _                  => new TestWaveGenerator(quietPeriod = 5000)
         }
 
-        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy)))
+        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f))))
+        isOver = false
 
       case bc: ButtonClicked if bc.source == showGrid   => jWarTheater.showGrid = showGrid.selected
       case bc: ButtonClicked if bc.source == showTracks => jWarTheater.showTracks = showTracks.selected
@@ -127,8 +137,8 @@ object UiApp extends SimpleSwingApplication
     }
 
     val toolbarSouth = new BoxPanel(Orientation.Horizontal) {
-      contents += new Label("Select node to drop")
-      contents += new Label("....")
+
+      contents += statusLabel
     }
     val bp = new BorderPanel {
       add(toolbar, BorderPanel.Position.North)
@@ -140,6 +150,27 @@ object UiApp extends SimpleSwingApplication
     override def closeOperation() = {
       system.terminate()
       System.exit(0)
+    }
+
+    def gameFinished(): Unit = {
+      println("Game finished")
+      isOver = true
+      implicit val ec = ExecutionContext.global
+      Future {
+        (0 until 10).reverse.foreach { i =>
+          Thread.sleep(1000)
+          Swing.onEDT(statusLabel.text = s"Restart int ${i}s")
+        }
+        Swing.onEDT(restartIfOver())
+      }
+    }
+
+    def restartIfOver(): Unit = {
+      println(s"Restarting if game is over $isOver")
+      if (isOver) {
+        statusLabel.text="Restarting"
+        buttonStart.doClick()
+      }
     }
   }
 
