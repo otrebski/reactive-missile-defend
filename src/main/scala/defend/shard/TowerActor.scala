@@ -1,6 +1,9 @@
 package defend.shard
 
-import akka.actor.{ Props, ActorRef, DiagnosticActorLogging }
+import java.text.SimpleDateFormat
+import java.util.Date
+
+import akka.actor.{ ActorRef, DiagnosticActorLogging, Props }
 import akka.cluster.Cluster
 import akka.cluster.sharding.ShardRegion
 import akka.event.Logging.MDC
@@ -9,14 +12,16 @@ import akka.persistence.fsm.PersistentFSM.FSMState
 import defend._
 import defend.model._
 import defend.shard.FsmProtocol.{ AddExperience, DomainEvent, ScheduledStateChangeAgUpdate, UpdateSelf }
-import defend.shard.TowerActor.Protocol.{ Ping, MessageOfDeath, Reloaded, Situation }
+import defend.shard.TowerActor.Protocol.{ MessageOfDeath, Ping, Reloaded, Situation }
 import defend.ui.StatusKeeper
 import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
 import pl.project13.scala.rainbow.Rainbow._
+
 import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.Random
+import scala.collection.JavaConversions._
 
 sealed trait TowerFsmState extends FSMState
 
@@ -43,7 +48,7 @@ object FsmProtocol {
 
   sealed trait DomainEvent
 
-  case class AddExperience(exp: Int) extends DomainEvent
+  case class AddExperience(exp: Int, date: Date) extends DomainEvent
 
   case class ScheduledStateChangeAgUpdate(at: Option[Long]) extends DomainEvent
 
@@ -51,30 +56,38 @@ object FsmProtocol {
 
 }
 
-class TowerActor(
-  statusKeeper: ActorRef,
-  reloadTime:   FiniteDuration
-)(implicit val domainEventClassTag: ClassTag[FsmProtocol.DomainEvent])
+class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit val domainEventClassTag: ClassTag[FsmProtocol.DomainEvent])
     extends PersistentFSM[TowerFsmState, TowerFsMData, FsmProtocol.DomainEvent]
     with DiagnosticActorLogging {
 
   override val log = akka.event.Logging(this)
   val nextLevelReduction = 0.05
   val commandCenterName = Cluster(context.system).selfAddress.toString
+  private val timeFormat = new SimpleDateFormat("HH:mm:ss")
 
   @throws[Exception](classOf[Exception]) override def preStart(): Unit = {
-    log.info(s"Starting $persistenceId on $commandCenterName")
+    log.setMDC(mdc(()))
+    log.warning(s"Starting $persistenceId on $commandCenterName")
     println(s"Starting $persistenceId on $commandCenterName".white.onBlue)
     super.preStart()
+    log.clearMDC()
   }
 
-  override def persistenceId: String = {
+  override def onRecoveryCompleted(): Unit = {
+    log.setMDC(mdc(()))
+    log.warning(s"Recovery completed for $persistenceId on $commandCenterName")
+    println(s"Recovery completed for $persistenceId on $commandCenterName".white.onBlue)
+    super.preStart()
+    log.clearMDC()
+  }
+
+  def persistenceId: String = {
     self.path.name
   }
 
   override def applyEvent(domainEvent: DomainEvent, currentData: TowerFsMData): TowerFsMData = domainEvent match {
-    case AddExperience(exp) =>
-      log.info("Adding experience")
+    case AddExperience(exp, date) =>
+      log.info(s"Gained $exp experience points at ${timeFormat.format(date)}")
       currentData.copy(experience = currentData.experience + exp)
     case ScheduledStateChangeAgUpdate(at) =>
       log.info("Scheduled state change")
@@ -107,9 +120,11 @@ class TowerActor(
         val reloadAt: Option[Long] = Some(System.currentTimeMillis() + (reducedReloadTime / 2 + Random.nextInt(reducedReloadTime.toInt / 2)).toLong)
         goto(FsmReloading) applying ScheduledStateChangeAgUpdate(reloadAt)
       } else {
-        val self1: UpdateSelf = UpdateSelf(situation.index, Some(situation.me))
-        log.info(s"Will stay with update $self1")
-        stay() applying self1
+        if (data.me.contains(situation.me)) {
+          stay()
+        } else {
+          stay() applying UpdateSelf(situation.index, Some(situation.me))
+        }
       }
   }
 
@@ -118,13 +133,15 @@ class TowerActor(
       log.info(s"Tower ${data.me} reloaded")
       goto(FsmReady)
     case Event(s: Situation, data) =>
-      log.info(s"Received situation ${s.index} by ${data.me} but I'm currently reloading")
-      stay applying UpdateSelf(s.index, data.me)
+      log.info(s"Received situation ${s.index}")
+      if (data.me.contains(s.me)) {
+        stay()
+      } else {
+        stay() applying UpdateSelf(s.index, Some(s.me))
+      }
   }
 
   when(FsmInfected) {
-    case Event(MessageOfDeath(alienEmp, count), data) =>
-      stay() //TODO
     case Event(_, TowerFsMData(_, _, _, Some(ts))) if ts < System.currentTimeMillis() =>
       goto(FsmReady) applying ScheduledStateChangeAgUpdate(None)
   }
@@ -140,15 +157,20 @@ class TowerActor(
       }
       val name: String = data.me.map(_.name).getOrElse("?")
       val keepAlive: TowerKeepAlive = StatusKeeper.Protocol.TowerKeepAlive(name, commandCenterName, towerState = state, experienceToLevel(stateData.experience))
-      log.info("Sending keep alive from {} with {}: {}", name, state, keepAlive)
+      log.debug("Sending keep alive from {} with {}: {}", name, state, keepAlive)
       statusKeeper ! keepAlive
       stay()
-    case Event(TowerActor.Protocol.ExperienceGained(exp), data) => stay() applying AddExperience(exp)
+    case Event(TowerActor.Protocol.ExperienceGained(exp), data) => stay() applying AddExperience(exp, new Date())
     case Event(MessageOfDeath(alienEmp, count), data) =>
       goto(FsmInfected) applying ScheduledStateChangeAgUpdate(Some(System.currentTimeMillis() + count * 1000))
-    case Event(s: Situation, state) =>
-      log.debug("Received situation ins state {}", stateName)
-      stay() applying UpdateSelf(s.index, Some(s.me))
+    case Event(s: Situation, data) =>
+      log.info(s"Received situation ${s.index}")
+      if (data.me.contains(s.me)) {
+        stay()
+      } else {
+        stay() applying UpdateSelf(s.index, Some(s.me))
+      }
+
     case a: Any =>
       log.debug("Unhandled message {}", a)
       stay()
@@ -170,8 +192,15 @@ class TowerActor(
   }
 
   override def mdc(currentMessage: Any): MDC = {
-    log.info(s"Received ${currentMessage.getClass}")
     Map[String, Any]("tower" -> persistenceId, "node" -> commandCenterName)
+  }
+
+  override def postStop(): Unit = {
+    log.setMDC(mdc(()))
+    log.warning(s"Stopping $persistenceId on $commandCenterName")
+    println(s"Stopping $persistenceId on $commandCenterName".white.onBlue)
+    super.postStop()
+    log.clearMDC()
   }
 }
 
@@ -189,6 +218,7 @@ object TowerActor {
   }
 
   import scala.concurrent.duration._
+
   def props(statusKeeper: ActorRef, reloadTime: FiniteDuration = 2 seconds): Props = Props(new TowerActor(statusKeeper, reloadTime))
 
   object Protocol {

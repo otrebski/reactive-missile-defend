@@ -168,7 +168,7 @@ object UiApp extends SimpleSwingApplication
     def restartIfOver(): Unit = {
       println(s"Restarting if game is over $isOver")
       if (isOver) {
-        statusLabel.text="Restarting"
+        statusLabel.text = "Restarting"
         buttonStart.doClick()
       }
     }
