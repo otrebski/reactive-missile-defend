@@ -74,10 +74,22 @@ object UiApp extends SimpleSwingApplication
       text = "Start game"
     }
 
+    private val LayoutStandard: String = "Standard"
+    private val LayoutLow: String = "Low defence"
+    private val LayoutHigh: String = "High defence"
     private val LayoutTest: String = "test"
     private val LayoutTest_2: String = "test-2"
-    private val defenceLayout = new ComboBox[String](List("Standard", "Low defence", "High defence", LayoutTest, LayoutTest_2))
-    private val attackMode = new ComboBox[String](List("Standard-random", "Top drop", "Intelligent wave", "Test"))
+    private val LayoutNarrow: String = "Narrow"
+
+    private val defenceLayout = new ComboBox[String](List(
+      LayoutStandard,
+      LayoutLow,
+      LayoutHigh,
+      LayoutTest,
+      LayoutTest_2,
+      LayoutNarrow
+    ))
+    private val attackMode = new ComboBox[String](List("Random", "Top drop", "Intelligent wave", "Test"))
     private val showGrid = new CheckBox("Show grid")
     showGrid.selected = jWarTheater.showGrid
     private val showTracks = new CheckBox("Show tracks")
@@ -100,8 +112,8 @@ object UiApp extends SimpleSwingApplication
         val towerNamePrefix = new SimpleDateFormat("dd_HHmmss").format(new Date())
         //        val (cities, defence) = generateCityAndDefence(50, landScape.groundLevel, 30, towersPerCity)
         val (cities, defence) = defenceLayout.selection.item match {
-          case "Standard"     => generateCityAndDefence(landScape.width, landScape.groundLevel, 30, 4, towerNamePrefix)
-          case "Low defence"  => generateCityAndDefence(landScape.width, landScape.groundLevel, 50, 2, towerNamePrefix)
+          case LayoutStandard => generateCityAndDefence(landScape.width, landScape.groundLevel, 30, 4, towerNamePrefix)
+          case LayoutLow      => generateCityAndDefence(landScape.width, landScape.groundLevel, 50, 2, towerNamePrefix)
           case "High defence" => generateCityAndDefence(landScape.width, landScape.groundLevel, 20, 6, towerNamePrefix)
           case LayoutTest => (
             List(City("A", Position(300, landScape.groundLevel), 100)),
@@ -111,9 +123,13 @@ object UiApp extends SimpleSwingApplication
             List(City("A", Position(350, landScape.groundLevel), 100)),
             List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
           )
+          case LayoutNarrow => (
+            List(City("A", Position(110, landScape.groundLevel), 100)),
+            List(20, 50, 80, 140, 170).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
+          )
         }
         val waveGenerator = attackMode.selection.item match {
-          case "Standard-random"  => new StandardRandomWaveGenerator()
+          case "Random"           => new StandardRandomWaveGenerator()
           case "Top drop"         => new RainWaveGenerator()
           case "Intelligent wave" => new IntelligentWaveGenerator()
           case _                  => new TestWaveGenerator(quietPeriod = 5000)
@@ -126,14 +142,20 @@ object UiApp extends SimpleSwingApplication
       case bc: ButtonClicked if bc.source == showTracks => jWarTheater.showTracks = showTracks.selected
     }
 
-    val toolbar = new BoxPanel(Orientation.Horizontal) {
+    val toolbar1 = new BoxPanel(Orientation.Horizontal) {
       contents += new Label("Towers/City")
       contents += defenceLayout
       contents += new Label("Attack mode")
       contents += attackMode
+    }
+    val toolbar2 = new BoxPanel(Orientation.Horizontal) {
       contents += showGrid
       contents += showTracks
       contents += buttonStart
+    }
+    val toolbar = new BoxPanel(Orientation.Vertical) {
+      contents += toolbar1
+      contents += toolbar2
     }
 
     val toolbarSouth = new BoxPanel(Orientation.Horizontal) {
