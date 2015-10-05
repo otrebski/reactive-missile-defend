@@ -89,7 +89,7 @@ object UiApp extends SimpleSwingApplication
       LayoutTest_2,
       LayoutNarrow
     ))
-    private val attackMode = new ComboBox[String](List("Random", "Top drop", "Intelligent wave", "Test"))
+    private val attackMode = new ComboBox[String](List("Random", "Top drop", "Intelligent wave", "Text wave", "Test"))
     private val showGrid = new CheckBox("Show grid")
     showGrid.selected = jWarTheater.showGrid
     private val showTracks = new CheckBox("Show tracks")
@@ -132,6 +132,7 @@ object UiApp extends SimpleSwingApplication
           case "Random"           => new StandardRandomWaveGenerator()
           case "Top drop"         => new RainWaveGenerator()
           case "Intelligent wave" => new IntelligentWaveGenerator()
+          case "Text wave"        => new AdWaveGenerator()
           case _                  => new TestWaveGenerator(quietPeriod = 5000)
         }
 
@@ -159,7 +160,6 @@ object UiApp extends SimpleSwingApplication
     }
 
     val toolbarSouth = new BoxPanel(Orientation.Horizontal) {
-
       contents += statusLabel
     }
     val bp = new BorderPanel {
