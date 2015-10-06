@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import akka.actor._
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import defend.cluster._
 import defend.game._
 import defend.model._
@@ -67,7 +68,7 @@ object UiApp extends SimpleSwingApplication
     commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0))
   private val uiUpdater = system.actorOf(UiUpdater.props(jWarTheater, statusKeeperProxy), "uiUpdater")
 
-  override def top: Frame = new MainFrame {
+  override def top: Frame = new MainFrame with LazyLogging {
     title = "Reactive Missile Defend  UI"
 
     private val buttonStart = new Button {
@@ -193,6 +194,11 @@ object UiApp extends SimpleSwingApplication
         statusLabel.text = "Restarting"
         buttonStart.doClick()
       }
+    }
+
+    override def close(): Unit = {
+      logger.info("Closing UIApp window")
+      super.close()
     }
   }
 
