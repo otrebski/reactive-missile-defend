@@ -69,15 +69,26 @@ object CommandCenterIcons {
       (x._1, ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(name)))
     })
 
+  lazy val iconsForIp = Map(
+    "192.168.0.10" -> "magnet.png",
+    "192.168.0.11" -> "diamond.png",
+    "192.168.0.12" -> "ruby.png",
+    "192.168.0.13" -> "cup.png"
+  ).map(x => {
+      val name: String = "cc-by-port/" + x._2
+      (x._1, ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(name)))
+    })
+
   def iconForCommandCentre(commandCentre: String): BufferedImage = {
     //akka.tcp://defend@127.0.0.1:3000
     def defaultName(name: String) = {
       commandCenterIcons(Math.abs(commandCentre.hashCode) % commandCenterIcons.size)
     }
-    val r = "akka.tcp://.*@.*:(\\d+)".r
+    val regex = "akka.tcp://.*@(.*):(\\d+)".r
     commandCentre match {
-      case r(port) => iconsForPort.getOrElse(port, defaultName(commandCentre))
-      case _       => defaultName(commandCentre)
+      case regex(ip, port) if iconsForIp.contains(ip) => iconsForIp.getOrElse(ip, defaultName(commandCentre))
+      case regex(ip, port)                            => iconsForPort.getOrElse(port, defaultName(commandCentre))
+      case _                                          => defaultName(commandCentre)
     }
   }
 
