@@ -38,8 +38,8 @@ trait ShutdownNode {
         println("   Terminate and leave                       ".onWhite.red)
         println("                                             ".onRed)
         val cluster: Cluster = Cluster(system)
-        cluster.registerOnMemberRemoved(system.terminate())
-
+        system.terminate()
+        system.registerOnTermination(System.exit(0))
       case ShutdownNode.SystemExit0 =>
         println("                                              ".onRed)
         println("   Have received command to System.exit(0)    ".onWhite.red)

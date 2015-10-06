@@ -69,8 +69,6 @@ object UiApp extends SimpleSwingApplication
 
   private val uiUpdater = system.actorOf(UiUpdater.props(jWarTheater, statusKeeperProxy), "uiUpdater")
 
-
-
   override def top: Frame = new MainFrame with LazyLogging {
     system.registerOnTermination(logger.info("Terminating actor system"))
 
