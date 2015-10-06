@@ -66,9 +66,14 @@ object UiApp extends SimpleSwingApplication
     showTracks               = true,
     dragListener             = Some(dragFunction),
     commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0))
+
   private val uiUpdater = system.actorOf(UiUpdater.props(jWarTheater, statusKeeperProxy), "uiUpdater")
 
+
+
   override def top: Frame = new MainFrame with LazyLogging {
+    system.registerOnTermination(logger.info("Terminating actor system"))
+
     title = "Reactive Missile Defend  UI"
 
     private val buttonStart = new Button {
