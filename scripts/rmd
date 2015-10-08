@@ -3,16 +3,16 @@
 RETVAL=0;
 set -x
 start() {
-  echo “Starting Service”
-  export SEED_NODE=akka.tcp://defend@127.0.0.1:3000
-  export HOST=127.0.0.1
+  echo "Starting Service"
+  export SEED_NODE=akka.tcp://defend@192.168.0.9:3000
+  export HOST=$(ifconfig | grep eth0 -A 1 | tail -n 1 | cut -d: -f2 | cut -d\  -f1)
   export PORT=3004
   /usr/share/missiledefend-1.0.1/bin/missiledefend cc > /tmp/rmd.out 2>/tmp/rmd.err &
   echo "Started"
 }
 
 stop() {
-  echo “Stopping Service”
+  echo "Stopping Service"
   killall java
 }
 
@@ -32,9 +32,8 @@ restart)
   restart
 ;;
 *)
-echo "0=$0"
-echo "1=$1"
-echo ”Usage: $0 startstoprestart”
+
+echo "Usage: $0 {start|stop|restart}"
 exit 1
 esac
 
