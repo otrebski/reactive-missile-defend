@@ -209,7 +209,7 @@ class JWarTheater(
           case 8 => colors(2)
           case _ => colors(3)
         }
-        val transparency: Int = (e.expire * 255).toInt
+        val transparency: Int = Math.min(Math.max((e.expire * 255).toInt, 0), 255)
         d.setColor(new Color(c.getRed, c.getGreen, c.getBlue, transparency))
         val radius: Int = e.explosion.weapon.explosionRadius
 
