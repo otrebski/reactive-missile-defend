@@ -4,7 +4,7 @@ RETVAL=0;
 set -x
 start() {
   echo "Starting Service"
-  export SEED_NODE=akka.tcp://defend@192.168.0.9:3000
+  export SEED_NODE=akka.tcp://defend@192.168.2.10:3000
   export HOST=$(ifconfig | grep eth0 -A 1 | tail -n 1 | cut -d: -f2 | cut -d\  -f1)
   export PORT=3004
   /home/pi/reactive-missile-defend/target/universal/missiledefend-1.0.1/bin/missiledefend cc > /tmp/rmd.out 2>/tmp/rmd.err &
