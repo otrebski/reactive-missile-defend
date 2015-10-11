@@ -70,10 +70,10 @@ object CommandCenterIcons {
     })
 
   lazy val iconsForIp = Map(
-    "192.168.0.10" -> "magnet.png",
-    "192.168.0.11" -> "diamond.png",
-    "192.168.0.12" -> "ruby.png",
-    "192.168.0.13" -> "cup.png"
+    "192.168.2.10" -> "cup.png",
+    "192.168.2.11" -> "diamond.png",
+    "192.168.2.12" -> "ruby.png",
+    "192.168.2.13" -> "magnet.png"
   ).map(x => {
       val name: String = "cc-by-port/" + x._2
       (x._1, ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(name)))
