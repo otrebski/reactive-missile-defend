@@ -29,7 +29,7 @@ object DefenceCommandCenter extends App
   println(""" Type "shutdown" to stop [call system.shutdown()]""".black.onYellow)
   println(""" Type "leave" to leave cluster [call cluster.leave(cluster.selfAddress)] """.black.onYellow)
 
-  commandLoop()
+  //  commandLoop()
 
   @tailrec
   private def commandLoop(): Unit = {
