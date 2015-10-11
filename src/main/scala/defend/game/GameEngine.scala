@@ -2,7 +2,7 @@ package defend.game
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.contrib.pattern.ClusterSharding
+import akka.cluster.sharding.ClusterSharding
 import akka.event.Logging.MDC
 import defend._
 import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick }
@@ -13,7 +13,16 @@ import defend.shard.TowerActor.Protocol.MessageOfDeath
 import scala.concurrent.duration._
 import scala.language.{ implicitConversions, postfixOps }
 
-class GameEngine(var defence: List[DefenceTower], var city: List[City], landScape: LandScape, waveGenerator: WaveGenerator, statusKeeper: ActorRef) extends Actor with DiagnosticActorLogging {
+class GameEngine(
+  var defence:      List[DefenceTower],
+  var city:         List[City],
+  landScape:        LandScape,
+  waveGenerator:    WaveGenerator,
+  statusKeeper:     ActorRef,
+  gameOverCallback: Option[() => Unit]
+)
+    extends Actor
+    with DiagnosticActorLogging {
 
   private var lastTimestamp: Long = System.currentTimeMillis()
   private var alienWeaponsInAction = List.empty[WeaponInAction[AlienWeapon]]
@@ -28,6 +37,7 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
   private val towerShard: ActorRef = ClusterSharding(context.system).shardRegion(TowerActor.shardRegion)
   private val towerPings: List[Cancellable] = defence.map(d => context.system.scheduler.schedule(10 millis, 100 millis, towerShard, Envelope(d.name, TowerActor.Protocol.Ping)))
   private val selfAddress: Address = Cluster(context.system).selfAddress
+  private var index = 0
 
   override def mdc(currentMessage: Any): MDC = {
     Map("node" -> selfAddress)
@@ -115,9 +125,10 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
 
       lastTimestamp = now
 
+      index = index + 1
       defence.foreach { t =>
         log.debug(s"Notify tower $t")
-        val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(t, alienWeaponsInAction, landScape))
+        val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(index, t, alienWeaponsInAction, landScape))
         towerShard ! envelope
       }
 
@@ -150,6 +161,7 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
         context.system.scheduler.scheduleOnce(50 millis, self, Tick)
       } else {
         defence.foreach(t => towerShard ! Envelope(t.name, PoisonPill))
+        gameOverCallback.foreach(_.apply())
       }
   }
 
@@ -170,13 +182,14 @@ class GameEngine(var defence: List[DefenceTower], var city: List[City], landScap
 object GameEngine {
 
   def props(
-    defence:       List[DefenceTower],
-    city:          List[City],
-    landScape:     LandScape,
-    waveGenerator: WaveGenerator,
-    statusKeeper:  ActorRef
+    defence:          List[DefenceTower],
+    city:             List[City],
+    landScape:        LandScape,
+    waveGenerator:    WaveGenerator,
+    statusKeeper:     ActorRef,
+    gameOverCallback: Option[() => Unit]
   ) = {
-    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper)
+    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback)
   }
 
   case object Protocol {

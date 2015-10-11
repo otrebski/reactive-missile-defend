@@ -1,9 +1,10 @@
 package defend.ui
 
 import akka.actor._
-import akka.cluster.ClusterEvent.{MemberRemoved, MemberUp, ReachableMember, UnreachableMember}
-import akka.cluster.{Cluster, ClusterEvent}
+import akka.cluster.ClusterEvent.{ MemberRemoved, MemberUp, ReachableMember, UnreachableMember }
+import akka.cluster.{ Cluster, ClusterEvent }
 import akka.event.Logging.MDC
+import defend.cluster.Roles
 import defend.model._
 import defend.ui.StatusKeeper.Protocol._
 
@@ -57,6 +58,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       points = m.points.getOrElse(points)
 
     case m: TowerKeepAlive =>
+      log.info(s"Received keepAlive from ${m.id}: $m")
       towersLastKeepAlive = towersLastKeepAlive.updated(m.id, timeProvider())
       defenceTowersStatus.get(m.id)
         .orElse(Some(DefenceTowerStatus(DefenceTower(m.id, Position(0, 0)), m.towerState, isUp = true, Some(m.commandCenterName), m.level)))
@@ -67,20 +69,20 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
         }
       //update last message from defence tower
       commandCenters.get(m.commandCenterName).foreach(cc => commandCenters = commandCenters.updated(m.commandCenterName, cc.copy(lastMessageTimestamp = timeProvider())))
-    case m: MemberUp =>
+    case m: MemberUp if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
-    case m: MemberRemoved =>
+    case m: MemberRemoved if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOffline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOffline))
-    case m: UnreachableMember =>
+    case m: UnreachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterUnreachable, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterUnreachable))
 
-    case m: ReachableMember =>
+    case m: ReachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))

@@ -1,0 +1,1 @@
+export SEED_NODE=akka.tcp://defend@127.0.0.1:3000; export HOST=127.0.0.1;export PORT=300x

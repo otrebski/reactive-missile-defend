@@ -10,24 +10,26 @@ import scala.annotation.tailrec
 import scala.io.StdIn
 
 object DefenceCommandCenter extends App
+    with Roles.CommandCenterRole
     with SharedLevelDb
     with DefendActorSystem
     with StatusKeeperSingleton
     with StatusKeeperProxy
     with TowerShard
+    with ShutdownNode
     with Terminal {
 
   system.actorOf(Props[SharedJournalSetter])
 
   private val clusterMonitor: ActorRef = system.actorOf(Props(new ClusterMonitor))
-  private val cluster: Cluster = Cluster(system)
+  val cluster: Cluster = Cluster(system)
   cluster.subscribe(clusterMonitor, InitialStateAsEvents, classOf[ClusterDomainEvent])
   system.eventStream.subscribe(clusterMonitor, classOf[DeadLetter])
   println(" Defence started".green)
   println(""" Type "shutdown" to stop [call system.shutdown()]""".black.onYellow)
   println(""" Type "leave" to leave cluster [call cluster.leave(cluster.selfAddress)] """.black.onYellow)
 
-  commandLoop()
+  //  commandLoop()
 
   @tailrec
   private def commandLoop(): Unit = {
@@ -35,7 +37,7 @@ object DefenceCommandCenter extends App
     Command(StdIn.readLine(), parser) match {
       case Command.Shutdown =>
         println("Shutting down".green)
-        system.shutdown()
+        system.terminate()
       case Command.Leave =>
         println("Leaving cluster".green)
         cluster.leave(cluster.selfAddress)

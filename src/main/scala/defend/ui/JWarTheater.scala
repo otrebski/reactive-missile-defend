@@ -10,20 +10,22 @@ import javax.swing.Timer
 import defend._
 import defend.model._
 import defend.ui.CommandCenterIcons._
+import defend.ui.JWarTheater.CommandCenterPopupAction
 
 import scala.collection.immutable.Queue
-import scala.language.implicitConversions
+//import scala.language.implicitConversions
 import scala.swing._
 import scala.swing.event.{ MouseClicked, MousePressed, MouseReleased }
 
 class JWarTheater(
-  var warTheater:           WarTheater,
-  autoDownUnreachableAfter: Long,
-  var offlineSince:         Option[Long]                = None,
-  var showGrid:             Boolean                     = false,
-  var showTracks:           Boolean                     = false,
-  var dragListener:         Option[(DragEvent) => Unit] = None,
-  val timeProvider:         () => Long                  = System.currentTimeMillis
+  var warTheater:               WarTheater,
+  autoDownUnreachableAfter:     Long,
+  var offlineSince:             Option[Long]                   = None,
+  var showGrid:                 Boolean                        = false,
+  var showTracks:               Boolean                        = false,
+  var dragListener:             Option[(DragEvent) => Unit]    = None,
+  var commandCenterPopupAction: List[CommandCenterPopupAction] = List.empty,
+  val timeProvider:             () => Long                     = System.currentTimeMillis
 )
     extends Component {
 
@@ -38,7 +40,8 @@ class JWarTheater(
   minimumSize = preferredSize
 
   private val debugFont: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
-  private val offlineFont: swing.Font = new swing.Font("Arial", Font.BOLD, 32)
+  private val offlineTowerFont: swing.Font = new swing.Font("Arial", Font.BOLD, 14)
+  private val offlineStatusKeeperFont: swing.Font = new swing.Font("Arial", Font.BOLD, 32)
   private val cityIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/city.png"))
   private val defenceIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tower_ready.png"))
   private val defenceIconOffline: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tower_offline.png"))
@@ -60,7 +63,8 @@ class JWarTheater(
   private val selectedTowerInfoColor = new swing.Color(1f, 1f, 1f, 0.5f)
   listenTo(mouse.clicks)
 
-  var clickPoint: Option[Position] = None
+  private var clickPoint: Option[Position] = None
+  private var commandCenterOnScreen: Map[Rect, String] = Map.empty[Rect, String]
 
   reactions += {
     case a: MouseClicked =>
@@ -70,6 +74,24 @@ class JWarTheater(
           val p: Position = d.defenceTower.position
           closeEnough(p, Position(point.x, warTheater.landScape.height - point.y), 16)
       }
+
+      commandCenterOnScreen
+        .find(rn => rn._1.contains(a.point))
+        .map(_._2)
+        .foreach { name =>
+          val popup = new PopupMenu
+          commandCenterPopupAction.foreach { action =>
+            val item = new MenuItem(new Action(s"${action.name} $name") {
+              def apply = {
+                action.action.apply(name)
+              }
+            })
+            popup.contents += item
+          }
+
+          popup.show(this, a.point.x, a.point.y)
+        }
+
     case a: MousePressed =>
       clickPoint = Some(Position(a.point.x, warTheater.landScape.height - a.point.y))
     case a: MouseReleased =>
@@ -134,7 +156,7 @@ class JWarTheater(
         g.setColor(gray)
         g.fillRect(0, 0, landScape.width, landScape.height)
         g.setColor(Color.RED)
-        g.setFont(offlineFont)
+        g.setFont(offlineStatusKeeperFont)
         val string: String = f"Offline ${duration.toFloat / 1000}%.1fs"
         val x = landScape.width / 2 - g.getFontMetrics.stringWidth(string) / 2
         g.drawString(string, x, landScape.height / 2)
@@ -187,7 +209,7 @@ class JWarTheater(
           case 8 => colors(2)
           case _ => colors(3)
         }
-        val transparency: Int = (e.expire * 255).toInt
+        val transparency: Int = Math.min(Math.max((e.expire * 255).toInt, 0), 255)
         d.setColor(new Color(c.getRed, c.getGreen, c.getBlue, transparency))
         val radius: Int = e.explosion.weapon.explosionRadius
 
@@ -255,10 +277,11 @@ class JWarTheater(
         if (!t.isUp) {
           t.lastMessageTimestamp.foreach {
             ts =>
+              d.setFont(offlineTowerFont)
               val time = timeProvider() - ts
               val toDisplay: String = if (time > 100000) ">100s" else s"${time / 1000}s"
               val stringWidth: Int = d.getFontMetrics.stringWidth(toDisplay)
-              d.drawString(toDisplay, x - stringWidth / 2, landScape.height - y - d.getFontMetrics.getHeight - 5)
+              d.drawString(toDisplay, x - stringWidth / 2, landScape.height - y - d.getFontMetrics.getHeight - 10)
           }
         }
         //paint command center
@@ -394,6 +417,8 @@ class JWarTheater(
       val icon: BufferedImage = iconForCommandCentre(center)
       val width = metrics.stringWidth(name) + serverIcon.getWidth * 5
       val r: Rect = Rect(xPos, scape.height - yPos, width, height)
+      commandCenterOnScreen = commandCenterOnScreen.updated(r, center.name)
+
       d.setColor(Color.BLACK)
       d.fillRect(r.x, r.y, r.width, r.height)
       val ts = timeProvider() - center.lastMessageTimestamp
@@ -478,18 +503,25 @@ class JWarTheater(
   implicit def doubleToIn(d: Double): Int = d.toInt
 
   def clusterAddressToHostPort(address: String): String = {
-    if (address.matches(".*@.*:.*"))
-      address
-        .substring(address.indexOf('@') + 1)
-        .substring(0, address.substring(address.indexOf('@') + 1).indexOf(':'))
-    else {
+    //akka.tcp://defend@127.0.0.1:3002
+    if (address.matches(".*@.*:.*")) {
+      val split = address.split("[@:]")
+      split(2) match {
+        case "127.0.0.1" => s"port ${split(3)}"
+        case _           => split(2)
+      }
+    } else {
       address
     }
   }
 
 }
 
-case class Rect(x: Int, y: Int, width: Int, height: Int)
+case class Rect(x: Int, y: Int, width: Int, height: Int) {
+  def contains(point: Point): Boolean = {
+    (point.x > x) && (point.x - x < width) && (point.y > y) && (point.y - y < height)
+  }
+}
 
 object JWarTheater extends SimpleSwingApplication {
   override def top: Frame = new MainFrame {
@@ -547,6 +579,7 @@ object JWarTheater extends SimpleSwingApplication {
       case 6 => DefenceTowerInfected
       case _ => DefenceTowerReady
     }
+
     private val towerStatuses: List[DefenceTowerStatus] = defence.zipWithIndex.map(t =>
       DefenceTowerStatus(
         defenceTower         = t._1,
@@ -564,10 +597,15 @@ object JWarTheater extends SimpleSwingApplication {
       override def apply(v1: DragEvent): Unit = {
       }
     }
-    val timeProvider = new Function0[Long] {
+    val timeProvider = new (() => Long) {
       override def apply(): Long = 10004
     }
-    private val theater: JWarTheater = new JWarTheater(warTheater, 8 * 1000, Some(0), true, dragListener = Some(dragFun), timeProvider = timeProvider)
+    private val theater: JWarTheater = new JWarTheater(warTheater, 8 * 1000, Some(0), true,
+      dragListener             = Some(dragFun),
+      timeProvider             = timeProvider,
+      commandCenterPopupAction = List(new CommandCenterPopupAction("Some action on", new (String => Unit) {
+        override def apply(v1: String): Unit = println(s"Disconnecting $v1")
+      })))
     contents = new BoxPanel(Orientation.Vertical) {
       contents += theater
       border = Swing.EmptyBorder(30, 30, 10, 30)
@@ -622,4 +660,6 @@ object JWarTheater extends SimpleSwingApplication {
     }
   }
 
+  case class CommandCenterPopupAction(name: String, action: (String => Unit))
 }
+

@@ -1,0 +1,41 @@
+@startuml
+
+'default
+left to right direction
+
+skinparam usecase {
+	BackgroundColor Yellow
+	BorderColor Black
+	ArrowColor Black
+}
+
+
+skinparam cloud {
+	BackgroundColor LightGray
+	BorderColor Gray
+	ArrowColor Black
+}
+
+
+cloud GameEngine as ui {
+  (Game Engine) as ge
+}
+
+
+cloud CommandCenter1 as cc1 {
+  (Tower 1) as t1
+  (Tower 2) as t2
+}
+
+cloud CommandCenter2 as cc2 {
+  (Tower 3) as t3
+  (Tower 4) as t4
+}
+
+ge <--> t1
+ge <--> t2
+
+ge <--> t3
+ge <--> t4
+
+@enduml

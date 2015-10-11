@@ -4,12 +4,16 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import akka.actor._
+import com.typesafe.scalalogging.slf4j.LazyLogging
 import defend.cluster._
 import defend.game._
 import defend.model._
+import defend.ui.JWarTheater.CommandCenterPopupAction
 import net.ceedubs.ficus.Ficus._
 
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.FiniteDuration
+import scala.language.implicitConversions
 import scala.swing._
 import scala.swing.event.ButtonClicked
 
@@ -18,7 +22,7 @@ object UiApp extends SimpleSwingApplication
     with DefendActorSystem
     with StatusKeeperSingleton
     with StatusKeeperProxy
-    with TowerShard {
+    with TowerShardProxy {
 
   import pl.project13.scala.rainbow.Rainbow._
 
@@ -32,28 +36,77 @@ object UiApp extends SimpleSwingApplication
       gameEngine.filter(_ => v1.moveVector.speed > 10).foreach(_ ! GameEngine.Protocol.AlienRocketFired(AlienMissile(1, 10), v1.start, v1.moveVector, None))
     }
   }
+
+  private val terminateActorSystem = new CommandCenterPopupAction("Terminate actor system", new (String => Unit) {
+    override def apply(v1: String): Unit = {
+      val path: String = s"$v1/user/shutdown"
+      println(s"Will send shutdown to path $path")
+      system.actorSelection(path) ! ShutdownNode.Terminate
+    }
+  })
+
+  private val leaveCluster = new CommandCenterPopupAction("Leave cluster", new (String => Unit) {
+    override def apply(v1: String): Unit = {
+      val path: String = s"$v1/user/shutdown"
+      println(s"Will send shutdown to path $path")
+      system.actorSelection(path) ! ShutdownNode.LeaveCluster
+    }
+  })
+
+  private val systemExit0 = new CommandCenterPopupAction("Call system exit(0)", new (String => Unit) {
+    override def apply(v1: String): Unit = {
+      val path: String = s"$v1/user/shutdown"
+      println(s"Will send shutdown to path $path")
+      system.actorSelection(path) ! ShutdownNode.SystemExit0
+    }
+  })
+
   private val jWarTheater: JWarTheater = new JWarTheater(emptyWarTheater, duration,
-    showGrid     = false,
-    showTracks   = true,
-    dragListener = Some(dragFunction))
+    showGrid                 = false,
+    showTracks               = true,
+    dragListener             = Some(dragFunction),
+    commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0))
+
   private val uiUpdater = system.actorOf(UiUpdater.props(jWarTheater, statusKeeperProxy), "uiUpdater")
 
-  override def top: Frame = new MainFrame {
+  override def top: Frame = new MainFrame with LazyLogging {
+    system.registerOnTermination(logger.info("Terminating actor system"))
+
     title = "Reactive Missile Defend  UI"
 
     private val buttonStart = new Button {
       text = "Start game"
     }
-    private val defenceLayout = new ComboBox[String](List("Standard", "Low defence", "High defence", "test"))
-    private val attackMode = new ComboBox[String](List("Standard-random", "Top drop", "Intelligent wave", "Test"))
+
+    private val LayoutStandard: String = "Standard"
+    private val LayoutLow: String = "Low defence"
+    private val LayoutHigh: String = "High defence"
+    private val LayoutTest: String = "test"
+    private val LayoutTest_2: String = "test-2"
+    private val LayoutNarrow: String = "Narrow"
+
+    private val defenceLayout = new ComboBox[String](List(
+      LayoutStandard,
+      LayoutLow,
+      LayoutHigh,
+      LayoutTest,
+      LayoutTest_2,
+      LayoutNarrow
+    ))
+    private val attackMode = new ComboBox[String](List("Random", "Top drop", "Intelligent wave", "Text wave", "Test"))
     private val showGrid = new CheckBox("Show grid")
     showGrid.selected = jWarTheater.showGrid
     private val showTracks = new CheckBox("Show tracks")
     showTracks.selected = jWarTheater.showTracks
 
+    private val statusLabel: Label = new Label("")
+    private var isOver: Boolean = true
+
     listenTo(buttonStart)
     listenTo(showGrid)
     listenTo(showTracks)
+
+    val f: () => Unit = { () => Swing.onEDT(gameFinished()) }
 
     reactions += {
       case bc: ButtonClicked if bc.source == buttonStart =>
@@ -63,45 +116,92 @@ object UiApp extends SimpleSwingApplication
         val towerNamePrefix = new SimpleDateFormat("dd_HHmmss").format(new Date())
         //        val (cities, defence) = generateCityAndDefence(50, landScape.groundLevel, 30, towersPerCity)
         val (cities, defence) = defenceLayout.selection.item match {
-          case "Standard"     => generateCityAndDefence(landScape.width, landScape.groundLevel, 30, 4, towerNamePrefix)
-          case "Low defence"  => generateCityAndDefence(landScape.width, landScape.groundLevel, 50, 2, towerNamePrefix)
+          case LayoutStandard => generateCityAndDefence(landScape.width, landScape.groundLevel, 30, 4, towerNamePrefix)
+          case LayoutLow      => generateCityAndDefence(landScape.width, landScape.groundLevel, 50, 2, towerNamePrefix)
           case "High defence" => generateCityAndDefence(landScape.width, landScape.groundLevel, 20, 6, towerNamePrefix)
-          case "test" => (
+          case LayoutTest => (
             List(City("A", Position(300, landScape.groundLevel), 100)),
-            List(200, 400, 600).map(x => DefenceTower(s"T$x", Position(x, landScape.groundLevel)))
+            List(200, 400, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
+          )
+          case LayoutTest_2 => (
+            List(City("A", Position(350, landScape.groundLevel), 100)),
+            List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
+          )
+          case LayoutNarrow => (
+            List(City("A", Position(110, landScape.groundLevel), 100)),
+            List(20, 50, 80, 140, 170).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
           )
         }
         val waveGenerator = attackMode.selection.item match {
-          case "Standard-random"  => new StandardRandomWaveGenerator()
+          case "Random"           => new StandardRandomWaveGenerator()
           case "Top drop"         => new RainWaveGenerator()
           case "Intelligent wave" => new IntelligentWaveGenerator()
-          case _                  => new TestWaveGenerator()
+          case "Text wave"        => new AdWaveGenerator()
+          case _                  => new TestWaveGenerator(quietPeriod = 5000)
         }
 
-        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy)))
+        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f))))
+        isOver = false
 
       case bc: ButtonClicked if bc.source == showGrid   => jWarTheater.showGrid = showGrid.selected
       case bc: ButtonClicked if bc.source == showTracks => jWarTheater.showTracks = showTracks.selected
     }
 
-    val toolbar = new BoxPanel(Orientation.Horizontal) {
+    val toolbar1 = new BoxPanel(Orientation.Horizontal) {
       contents += new Label("Towers/City")
       contents += defenceLayout
       contents += new Label("Attack mode")
       contents += attackMode
+    }
+    val toolbar2 = new BoxPanel(Orientation.Horizontal) {
       contents += showGrid
       contents += showTracks
       contents += buttonStart
     }
+    val toolbar = new BoxPanel(Orientation.Vertical) {
+      contents += toolbar1
+      contents += toolbar2
+    }
+
+    val toolbarSouth = new BoxPanel(Orientation.Horizontal) {
+      contents += statusLabel
+    }
     val bp = new BorderPanel {
       add(toolbar, BorderPanel.Position.North)
       add(jWarTheater, BorderPanel.Position.Center)
+      add(toolbarSouth, BorderPanel.Position.South)
     }
     contents = bp
 
     override def closeOperation() = {
-      system.shutdown()
+      system.terminate()
       System.exit(0)
+    }
+
+    def gameFinished(): Unit = {
+      println("Game finished")
+      isOver = true
+      implicit val ec = ExecutionContext.global
+      Future {
+        (0 until 10).reverse.foreach { i =>
+          Thread.sleep(1000)
+          Swing.onEDT(statusLabel.text = s"Restart int ${i}s")
+        }
+        Swing.onEDT(restartIfOver())
+      }
+    }
+
+    def restartIfOver(): Unit = {
+      println(s"Restarting if game is over $isOver")
+      if (isOver) {
+        statusLabel.text = "Restarting"
+        buttonStart.doClick()
+      }
+    }
+
+    override def close(): Unit = {
+      logger.info("Closing UIApp window")
+      super.close()
     }
   }
 

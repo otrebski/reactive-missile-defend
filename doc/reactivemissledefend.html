@@ -32,7 +32,6 @@
 <body>
 <div class="deck-container">
 
-
   <section class="slide">
     <h2 align="center">
       Defend Earth against an alien invasion<br/>
@@ -43,14 +42,31 @@
   </section>
 
   <section class="slide">
-      <h2>Goals</h2>
-      <div>Details of the code are not important.</div>
-      <div>I want you to get an idea how akka cluster works.</div>
+    <h2>Goals</h2>
+    <div>Details of the code are not important.</div>
+    <div>I want you to get an idea how akka cluster works.</div>
+  </section>
+  
+  <section class="slide">
+    <diV>
+    <img src="images/Richard-feynman.jpg">
+    </diV>
+    <diV>https://it.wikipedia.org/wiki/File:Richard-feynman.jpg</diV>
   </section>
 
   <section class="slide">
-    <h1>Aliens !!!</h1>
-    <img src="images/alien-308429_1280.png">
+    <blockquote>
+      <p>...it seems to have been the general policy then to not try to repeat psychological experiments,</p>
+      <p><cite>Richard Feynman</cite></p>
+    </blockquote>
+  </section>
+
+  <section class="slide">
+    <h2>Cyclotron: Princeton vs MIT</h2>
+    <div>MIT - had built a new cyclotron (...) It was what I would call a gold-plated cyclotron.
+    </div>
+    <div>Princeton - The whole cyclotron was there (in basement) in one room, and it was complete, absolute chaos!</div>
+    <div>Who has more papers?</div>
   </section>
 
   <section class="slide">
@@ -63,41 +79,28 @@
     <img src="images/defence.png">
   </section>
 
+  <!--<section class="slide">-->
+    <!--<h2>The structure of the cluster</h2>-->
+    <!--<img src="images/Cluster.svg" alt="Cluster overview">-->
+  <!--</section>-->
 
-  <section class="slide">
-    <h2>Cli UI</h2>
-    <img src="images/cliui.png">
-  </section>
+  <!--<section class="slide">-->
+    <!--<h2>General message flow</h2>-->
+    <!--<img src="images/GeneralFlow.svg" alt="General message flow"/>-->
+  <!--</section>-->
 
-
-  <section class="slide">
-    <h2>What is a cluster?</h2>
-    <div>It's a bunch of actor systems (nodes) with connectivity, which know about other nodes</div>
-  </section>
-
-
-  <section class="slide">
-    <h2>The structure of the cluster</h2>
-    <img src="images/Cluster.svg" alt="Cluster overview">
-  </section>
-
-  <section class="slide">
-    <h2>General message flow</h2>
-    <img src="images/GeneralFlow.svg" alt="General message flow"/>
-  </section>
-
-  <section class="slide">
-    <h2>Reporting flow</h2>
-    <img src="images/ReportingFlow.svg" alt="Reporting message flow"/>
-  </section>
+  <!--<section class="slide">-->
+    <!--<h2>Reporting flow</h2>-->
+    <!--<img src="images/ReportingFlow.svg" alt="Reporting message flow"/>-->
+  <!--</section>-->
 
   <section class="slide">
     <h2>Some important cluster settings</h2>
     <pre><code>
       akka {
-        cluster {
-          auto-down-unreachable-after = 30s
-        }
+      cluster {
+      auto-down-unreachable-after = 30s
+      }
       }
     </code></pre>
     *It can be too short to use on PROD, but good for having this presentation
@@ -106,54 +109,39 @@
     <h1>Let's see some action</h1>
   </section>
 
-
   <section class="slide">
     <h2>What you know now:</h2>
     <ol>
       <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> works</li>
       <li>What you need <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">sharding</a> and <a
-              href="http://doc.akka.io/docs/akka/snapshot/scala/persistence.html">persistent actors</a> for </li>
-      <li>How <a href="http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html">Cluster singleton</a> works and what to expect</li>
-      <li>It's good to run failover tests before going on <a href="http://blog.codinghorror.com/new-programming-jargon/">protoduction</a></li>
-      <li>Close your nodes gracefully with <code>actorSystem.shutdown()</code> and leave cluster with <code>Cluster(actorSystem).leave()</code></li>
+          href="http://doc.akka.io/docs/akka/snapshot/scala/persistence.html">persistent actors</a> for
+      </li>
+      <li>It's good to run failover tests before going on <a
+          href="http://blog.codinghorror.com/new-programming-jargon/">protoduction</a></li>
     </ol>
-
-  </section>
-  <section class="slide">
-    <h2>What is next?</h2>
-    <ol>
-      <li>Upgrade to Akka 2.4</li>
-      <li>Separate GameEngine actor from Swing-UI, so the cluster split can be demonstrated easily</li>
-      <li>Try to use other cluster features like Akka Distributed Data or Pub-sub</li>
-        <li>Create multi-node tests</li>
-      <li>Have more fun with the application</li>
-    </ol>
-
   </section>
 
   <section class="slide">
     <h3>How to run this demo on your own laptop</h3>
     <pre>
     <code>
-#Clone project from GitHub:
-$ git clone https://github.com/otrebski/reactive-missile-defend.git
+      #Clone project from GitHub:
+      $ git clone https://github.com/otrebski/reactive-missile-defend.git
 
-#Run shared journal
-$ export SEED_NODE=akka.tcp://defend@localhost:3000; export HOST=localhost;export PORT=3000; sbt sj &#x21B5;
+      #Run shared journal
+      $ export SEED_NODE=akka.tcp://defend@localhost:3000; export HOST=localhost;export PORT=3000; sbt sj &#x21B5;
 
-#Run Swing UI
-$ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3001; sbt ui &#x21B5;
+      #Run Swing UI
+      $ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3001; sbt ui &#x21B5;
 
-#Run Command Center's node
-$ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3002 sbt cc &#x21B5;
+      #Run Command Center's node
+      $ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3002 sbt cc &#x21B5;
 
-#Run another Command Center's node
-$ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3003 sbt cc &#x21B5;
+      #Run another Command Center's node
+      $ SEED_NODE=akka.tcp://defend@localhost:3000; HOST=localhost; PORT=3003 sbt cc &#x21B5;
     </code>
     </pre>
-
   </section>
-
 
   <section class="slide">
     <h2>Thank you</h2>
