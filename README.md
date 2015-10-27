@@ -105,13 +105,21 @@ Start nodes:
 * Grep all logs with tower name. Messages to towers are indexed, so it is possible to check how many messages where lost. Logs should looks like this:
   ```
   Received situation 425
+  
   Received situation 426
+  
   Received situation 427
+  
   Starting T400-214 on akka.tcp://defend@127.0.0.1:3008
+  
   ...
+  
   ...
+  
   Recovery completed for T400-214 on akka.tcp://defend@127.0.0.1:3008
+  
   Received situation XXX
+  
   ```
   
   
