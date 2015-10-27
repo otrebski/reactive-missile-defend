@@ -1,6 +1,6 @@
 package defend.ui
 
-import java.awt.event.{ ActionEvent, ActionListener }
+import java.awt.event.{ ActionEvent, ActionListener, MouseEvent }
 import java.awt.geom.AffineTransform
 import java.awt.image.{ AffineTransformOp, BufferedImage }
 import java.awt.{ Color, Font, FontMetrics, Polygon }
@@ -13,7 +13,9 @@ import defend.ui.CommandCenterIcons._
 import defend.ui.JWarTheater.CommandCenterPopupAction
 
 import scala.collection.immutable.Queue
+
 //import scala.language.implicitConversions
+
 import scala.swing._
 import scala.swing.event.{ MouseClicked, MousePressed, MouseReleased }
 
@@ -58,6 +60,7 @@ class JWarTheater(
   private val serverIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/server-cloud.png"))
   private var paintTimestamp = Queue[Long]()
   private var selectedTower: Option[DefenceTowerStatus] = None
+  private var selectedCommandCenter: Option[String] = None
 
   private val angleErrorColor: swing.Color = new swing.Color(1f, 1f, 0f, 0.3f)
   private val selectedTowerInfoColor = new swing.Color(1f, 1f, 1f, 0.5f)
@@ -67,14 +70,19 @@ class JWarTheater(
   private var commandCenterOnScreen: Map[Rect, String] = Map.empty[Rect, String]
 
   reactions += {
-    case a: MouseClicked =>
+    case a: MouseClicked if a.peer.getButton == MouseEvent.BUTTON1 =>
+
       val point: Point = a.point
       selectedTower = warTheater.defence.find {
         d =>
           val p: Position = d.defenceTower.position
           closeEnough(p, Position(point.x, warTheater.landScape.height - point.y), 16)
       }
+      selectedCommandCenter = commandCenterOnScreen
+        .find(rn => rn._1.contains(a.point))
+        .map(_._2)
 
+    case a: MouseClicked if a.peer.getButton == MouseEvent.BUTTON3 =>
       commandCenterOnScreen
         .find(rn => rn._1.contains(a.point))
         .map(_._2)
@@ -88,10 +96,11 @@ class JWarTheater(
             })
             popup.contents += item
           }
-
           popup.show(this, a.point.x, a.point.y)
         }
-
+    case a: MouseClicked =>
+      selectedCommandCenter = None
+      selectedTower = None
     case a: MousePressed =>
       clickPoint = Some(Position(a.point.x, warTheater.landScape.height - a.point.y))
     case a: MouseReleased =>
@@ -289,7 +298,25 @@ class JWarTheater(
           img =>
             paintIcon(d, landScape, img, x, y - icon.getHeight - 10)
         }
+
+        //paint if CC is selected
+        if (selectedCommandCenter == t.commandCenterName) {
+          d.setColor(selectionColor(timeProvider()))
+          val rectX: Int = x - 16
+          val rectY: Int = landScape.height - y - 24
+          val width: Int = 32
+          val height: Int = 64
+          val arc: Int = 10
+          d.drawRoundRect(rectX, rectY, width, height, arc, arc)
+          d.drawRoundRect(rectX + 1, rectY + 1, width - 2, height - 2, arc, arc)
+        }
     }
+  }
+
+  def selectionColor(timestamp: Long): swing.Color = {
+    val int = (timestamp % 1000).toDouble //(0-255)
+    val d = (255 * Math.sin(int * Math.PI / 1000)).toInt
+    new swing.Color(255, d, d)
   }
 
   def paintSelectedDefence(g: Graphics2D, landScape: LandScape, defence: List[DefenceTowerStatus]) = {
@@ -308,9 +335,9 @@ class JWarTheater(
 
         val info =
           f"""|${t.defenceTower.name}
-              |Level: ${t.level}
-              |Range: $range
-              |Angle error: $degrees%2.1f°""".stripMargin
+             |Level: ${t.level}
+             |Range: $range
+             |Angle error: $degrees%2.1f°""".stripMargin
         g.setFont(debugFont)
         val metrics: FontMetrics = g.getFontMetrics
         val height = metrics.getHeight
@@ -420,6 +447,7 @@ class JWarTheater(
       commandCenterOnScreen = commandCenterOnScreen.updated(r, center.name)
 
       d.setColor(Color.BLACK)
+
       d.fillRect(r.x, r.y, r.width, r.height)
       val ts = timeProvider() - center.lastMessageTimestamp
       val widthDelay: Int = Math.min(Math.max((r.width * ts / (autoDownUnreachableAfter + nodeDownCorrection)).toInt, 0), r.width)
@@ -429,6 +457,13 @@ class JWarTheater(
       d.drawRect(r.x, r.y, widthDelay, r.height)
       d.setColor(Color.WHITE)
       d.drawRect(r.x, r.y, r.width, r.height)
+      if (selectedCommandCenter.contains(center.name)) {
+        d.setColor(selectionColor(timeProvider()))
+        for (i <- 1 until 4) {
+          d.drawRoundRect(r.x + i, r.y + i, r.width - 2 * i, r.height - 2 * i, r.height, r.height)
+        }
+      }
+
       d.setColor(center.status match {
         case CommandCenterUnreachable => Color.ORANGE
         case CommandCenterOnline      => Color.GREEN
@@ -598,7 +633,8 @@ object JWarTheater extends SimpleSwingApplication {
       }
     }
     val timeProvider = new (() => Long) {
-      override def apply(): Long = 10004
+      //      override def apply(): Long = 10004
+      override def apply(): Long = System.currentTimeMillis()
     }
     private val theater: JWarTheater = new JWarTheater(warTheater, 8 * 1000, Some(0), true,
       dragListener             = Some(dragFun),
@@ -612,7 +648,7 @@ object JWarTheater extends SimpleSwingApplication {
     }
     theater.showGrid = false
     theater.paintDebug = false
-    theater.offlineSince = Some(3000)
+    theater.offlineSince = None
     pack()
 
     val timer = new Timer(10, new ActionListener {
@@ -636,7 +672,11 @@ object JWarTheater extends SimpleSwingApplication {
         movedHumanWeapons = movedHumanWeapons.head.copy(moveVector = copy) :: movedHumanWeapons.tail
 
         last = System.currentTimeMillis()
-        warTheater = warTheater.copy(alienWeapons = movedAlienWeapons, humanWeapons = movedHumanWeapons)
+        warTheater = warTheater.copy(
+          alienWeapons = movedAlienWeapons,
+          humanWeapons = movedHumanWeapons,
+          timestamp    = System.currentTimeMillis() + 7000
+        )
 
         theater.updateState(warTheater)
         //        theater.offlineSince.foreach(since => theater.offlineSince = Some((since - millis) % 10000))
@@ -661,5 +701,6 @@ object JWarTheater extends SimpleSwingApplication {
   }
 
   case class CommandCenterPopupAction(name: String, action: (String => Unit))
+
 }
 
