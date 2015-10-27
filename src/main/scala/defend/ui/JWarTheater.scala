@@ -13,6 +13,7 @@ import defend.ui.CommandCenterIcons._
 import defend.ui.JWarTheater.CommandCenterPopupAction
 
 import scala.collection.immutable.Queue
+import scala.language.implicitConversions
 
 //import scala.language.implicitConversions
 
@@ -90,7 +91,7 @@ class JWarTheater(
           val popup = new PopupMenu
           commandCenterPopupAction.foreach { action =>
             val item = new MenuItem(new Action(s"${action.name} $name") {
-              def apply = {
+              def apply() = {
                 action.action.apply(name)
               }
             })
@@ -535,7 +536,7 @@ class JWarTheater(
     repaint()
   }
 
-  implicit def doubleToIn(d: Double): Int = d.toInt
+  implicit def doubleToInr(d: Double): Int = d.toInt
 
   def clusterAddressToHostPort(address: String): String = {
     //akka.tcp://defend@127.0.0.1:3002
