@@ -1,6 +1,6 @@
 # Reactive Missile Defend
+Branch for talk "Sharding with Akka Cluster: from theory to production" on http://15.jdd.org.pl/ conference.
 
-[Slides from Krakow Scala User Group](https://rawgit.com/otrebski/reactive-missile-defend/master/doc/reactivemissledefend.html#slide-0)
 # How cluster look like #
 Cluster should have following nodes:
 
