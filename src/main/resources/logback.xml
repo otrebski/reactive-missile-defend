@@ -20,7 +20,7 @@
         <file>rmd-${PORT}.log</file>
         <append>false</append>
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread] %logger - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %level [%tower @ %node] %logger - %msg%n</pattern>
         </layout>
     </appender>
     <appender name="FILE_ASYNC" class="ch.qos.logback.classic.AsyncAppender" queueSize="1024">
