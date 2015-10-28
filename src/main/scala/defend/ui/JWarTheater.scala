@@ -18,7 +18,7 @@ import scala.language.implicitConversions
 //import scala.language.implicitConversions
 
 import scala.swing._
-import scala.swing.event.{ MouseClicked, MousePressed, MouseReleased }
+import scala.swing.event.{ MouseMoved, MouseClicked, MousePressed, MouseReleased }
 
 class JWarTheater(
   var warTheater:               WarTheater,
@@ -66,23 +66,12 @@ class JWarTheater(
   private val angleErrorColor: swing.Color = new swing.Color(1f, 1f, 0f, 0.3f)
   private val selectedTowerInfoColor = new swing.Color(1f, 1f, 1f, 0.5f)
   listenTo(mouse.clicks)
+  listenTo(mouse.moves)
 
   private var clickPoint: Option[Position] = None
   private var commandCenterOnScreen: Map[Rect, String] = Map.empty[Rect, String]
 
   reactions += {
-    case a: MouseClicked if a.peer.getButton == MouseEvent.BUTTON1 =>
-
-      val point: Point = a.point
-      selectedTower = warTheater.defence.find {
-        d =>
-          val p: Position = d.defenceTower.position
-          closeEnough(p, Position(point.x, warTheater.landScape.height - point.y), 16)
-      }
-      selectedCommandCenter = commandCenterOnScreen
-        .find(rn => rn._1.contains(a.point))
-        .map(_._2)
-
     case a: MouseClicked if a.peer.getButton == MouseEvent.BUTTON3 =>
       commandCenterOnScreen
         .find(rn => rn._1.contains(a.point))
@@ -99,9 +88,16 @@ class JWarTheater(
           }
           popup.show(this, a.point.x, a.point.y)
         }
-    case a: MouseClicked =>
-      selectedCommandCenter = None
-      selectedTower = None
+    case a: MouseMoved =>
+      val point: Point = a.point
+      selectedTower = warTheater.defence.find {
+        d =>
+          val p: Position = d.defenceTower.position
+          closeEnough(p, Position(point.x, warTheater.landScape.height - point.y), 16)
+      }
+      selectedCommandCenter = commandCenterOnScreen
+        .find(rn => rn._1.contains(a.point))
+        .map(_._2)
     case a: MousePressed =>
       clickPoint = Some(Position(a.point.x, warTheater.landScape.height - a.point.y))
     case a: MouseReleased =>
@@ -458,7 +454,9 @@ class JWarTheater(
       d.drawRect(r.x, r.y, widthDelay, r.height)
       d.setColor(Color.WHITE)
       d.drawRect(r.x, r.y, r.width, r.height)
-      if (selectedCommandCenter.contains(center.name)) {
+      val towerSelectedWithThisCc = selectedTower.exists { _.commandCenterName.contains(center.name)}
+
+      if (selectedCommandCenter.contains(center.name) || towerSelectedWithThisCc) {
         d.setColor(selectionColor(timeProvider()))
         for (i <- 1 until 4) {
           d.drawRoundRect(r.x + i, r.y + i, r.width - 2 * i, r.height - 2 * i, r.height, r.height)
