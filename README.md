@@ -1,6 +1,6 @@
 # Reactive Missile Defend
 
-Reactive Missile Defend is application to demonstrate how Akka Cluster ([Sharding](http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html) and [Singleton](http://doc.akka.io/docs/akka/snapshot/scala/cluster-singleton.html)) works in stressful situation like network or power problem.  
+Reactive Missile Defend is an application to demonstrate how Akka Cluster ([Sharding](http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html) and [Singleton](http://doc.akka.io/docs/akka/snapshot/scala/cluster-singleton.html)) works in stressful situation like network or power problem.  The application is simulation of missile defence system. To intercept enemy missiles/bombs we are using missile towers. Every tower is seperate instance of Akka actor. These actors are distributed on many nodes. You can kill one of nodes and watch how actors are migrated.
 
 [Slides from Krakow Scala User Group](https://rawgit.com/otrebski/reactive-missile-defend/master/doc/reactivemissledefend.html#slide-0)
 # How cluster look like #
