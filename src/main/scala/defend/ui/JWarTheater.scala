@@ -299,9 +299,9 @@ class JWarTheater(
         //paint if CC is selected
         if (selectedCommandCenter == t.commandCenterName) {
           d.setColor(selectionColor(timeProvider()))
-          val rectX: Int = x - 16
+          val rectX: Int = x - 12
           val rectY: Int = landScape.height - y - 24
-          val width: Int = 32
+          val width: Int = 24
           val height: Int = 64
           val arc: Int = 10
           d.drawRoundRect(rectX, rectY, width, height, arc, arc)
@@ -454,7 +454,7 @@ class JWarTheater(
       d.drawRect(r.x, r.y, widthDelay, r.height)
       d.setColor(Color.WHITE)
       d.drawRect(r.x, r.y, r.width, r.height)
-      val towerSelectedWithThisCc = selectedTower.exists { _.commandCenterName.contains(center.name)}
+      val towerSelectedWithThisCc = selectedTower.exists { _.commandCenterName.contains(center.name) }
 
       if (selectedCommandCenter.contains(center.name) || towerSelectedWithThisCc) {
         d.setColor(selectionColor(timeProvider()))
