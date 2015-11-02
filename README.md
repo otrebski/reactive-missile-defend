@@ -1,5 +1,7 @@
 # Reactive Missile Defend
 
+Reactive Missile Defend is application to demonstrate how Akka Cluster ([Sharding](http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html) and [Singleton](http://doc.akka.io/docs/akka/snapshot/scala/cluster-singleton.html)) works in stressful situation like network or power problem.  
+
 [Slides from Krakow Scala User Group](https://rawgit.com/otrebski/reactive-missile-defend/master/doc/reactivemissledefend.html#slide-0)
 # How cluster look like #
 Cluster should have following nodes:
