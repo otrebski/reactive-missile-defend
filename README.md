@@ -6,6 +6,8 @@ Game looks like this:
 
 ![view](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/doc/images/screen_general.png)
 
+
+## Defence
 Towers can be in state:
 
 ![Ready](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/tower_ready.png) Ready to fire missile
@@ -16,6 +18,15 @@ Towers can be in state:
 
 ![Infected](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/poop-smiley.png) Infected by enemy virus, cant fire missile.
 
+## Alien weapons
+
+![Missile](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/alien_rocket.png) Alien missile - fast, small radius and low damage
+
+![Bomb](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/bomb.png) Bomb - slow small radius and medium damage
+
+![Nuke](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/radioactivity.png) - big damage and radius
+
+![Virus](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/game.png) Virus - Infect defence towers, move actor to Infected state for a few second. In this state tower can't shoot (actor is ingoring messages)
 
 [Slides from Krakow Scala User Group](https://rawgit.com/otrebski/reactive-missile-defend/master/doc/reactivemissledefend.html#slide-0)
 # How cluster look like #
