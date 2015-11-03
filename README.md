@@ -8,6 +8,9 @@ Game looks like this:
 
 
 ## Defence
+
+Our defence missile towers (one actor per each) and command centers (cluster nodes on which tower actors are run).
+
 Towers can be in state:
 
 ![Ready](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/tower_ready.png) Ready to fire missile
@@ -17,6 +20,24 @@ Towers can be in state:
 ![Offline](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/tower_offline.png) Offline - UI does not receive message from this tower for more than 500ms
 
 ![Infected](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/poop-smiley.png) Infected by enemy virus, cant fire missile.
+
+Command centers cluster nodes with started [Sharding](http://doc.akka.io/docs/akka/snapshot/scala/cluster-sharding.html) for [TowerActor](https://github.com/otrebski/reactive-missile-defend/blob/master/src/main/scala/defend/shard/TowerActor.scala). Command centers are displayed in form:
+
+``` IP => number of tower actors running ```
+
+In case of running on local host:
+
+``` PORT => number of tower actors running ```
+
+Under the tower is an icon. This icon represent one of command centers. It visualize on which node tower actor is running. Move mouse cursor on command center and towers will be highlighted.
+
+![view](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/doc/images/screen_selected_towers.png)
+
+And can be in color:
+
+ * Green - node is up and running
+ * Orange - Akka cluster detects that node is [unreachable](http://doc.akka.io/docs/akka/snapshot/scala/cluster-usage.html#Subscribe_to_Cluster_Events).
+ * Red - Akka cluster removes node from cluster or node [has left cluster](http://doc.akka.io/docs/akka/snapshot/scala/cluster-usage.html#Leaving)
 
 ## Alien weapons
 
