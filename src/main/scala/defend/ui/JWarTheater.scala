@@ -18,7 +18,7 @@ import scala.language.implicitConversions
 //import scala.language.implicitConversions
 
 import scala.swing._
-import scala.swing.event.{ MouseMoved, MouseClicked, MousePressed, MouseReleased }
+import scala.swing.event.{ MouseClicked, MouseMoved, MousePressed, MouseReleased }
 
 class JWarTheater(
   var warTheater:               WarTheater,
@@ -297,7 +297,7 @@ class JWarTheater(
         }
 
         //paint if CC is selected
-        if (selectedCommandCenter == t.commandCenterName) {
+        if (selectedCommandCenter.isDefined && selectedCommandCenter == t.commandCenterName) {
           d.setColor(selectionColor(timeProvider()))
           val rectX: Int = x - 12
           val rectY: Int = landScape.height - y - 24
@@ -332,9 +332,9 @@ class JWarTheater(
 
         val info =
           f"""|${t.defenceTower.name}
-             |Level: ${t.level}
-             |Range: $range
-             |Angle error: $degrees%2.1f°""".stripMargin
+              |Level: ${t.level}
+              |Range: $range
+              |Angle error: $degrees%2.1f°""".stripMargin
         g.setFont(debugFont)
         val metrics: FontMetrics = g.getFontMetrics
         val height = metrics.getHeight
@@ -454,7 +454,9 @@ class JWarTheater(
       d.drawRect(r.x, r.y, widthDelay, r.height)
       d.setColor(Color.WHITE)
       d.drawRect(r.x, r.y, r.width, r.height)
-      val towerSelectedWithThisCc = selectedTower.exists { _.commandCenterName.contains(center.name) }
+      val towerSelectedWithThisCc = selectedTower.exists {
+        _.commandCenterName.contains(center.name)
+      }
 
       if (selectedCommandCenter.contains(center.name) || towerSelectedWithThisCc) {
         d.setColor(selectionColor(timeProvider()))
@@ -595,9 +597,9 @@ object JWarTheater extends SimpleSwingApplication {
     )
 
     val commandCentres = List(
-      CommandCenter("Chrobry", status = CommandCenterOnline, 10000),
-      CommandCenter("Lokietek", status = CommandCenterUnreachable, 7000),
-      CommandCenter("Sobieski", status = CommandCenterOffline, 0)
+      CommandCenter("akka.tcp://a@192.168.2.11:3000", status = CommandCenterOnline, 10000),
+      CommandCenter("akka.tcp://a@192.168.2.12:3000", status = CommandCenterUnreachable, 7000),
+      CommandCenter("akka.tcp://a@192.168.2.13:3000", status = CommandCenterOffline, 0)
     )
 
     val explosions = List(
@@ -671,14 +673,20 @@ object JWarTheater extends SimpleSwingApplication {
         movedHumanWeapons = movedHumanWeapons.head.copy(moveVector = copy) :: movedHumanWeapons.tail
 
         last = System.currentTimeMillis()
+        val defenceTowerStatuses: List[DefenceTowerStatus] = warTheater.defence.map(x => x.copy(lastMessageTimestamp = Some(timeProvider() - 4000)))
+        val cc: List[CommandCenter] = warTheater.commandCentres.map { cc =>
+          val delay: Double = Math.pow(cc.name.substring(24, 25).toInt, 2) * 500
+          cc.copy(lastMessageTimestamp = timeProvider() - delay.toLong)
+        }
         warTheater = warTheater.copy(
-          alienWeapons = movedAlienWeapons,
-          humanWeapons = movedHumanWeapons,
-          timestamp    = System.currentTimeMillis() + 7000
+          alienWeapons   = movedAlienWeapons,
+          humanWeapons   = movedHumanWeapons,
+          timestamp      = System.currentTimeMillis() + 7000,
+          defence        = defenceTowerStatuses,
+          commandCentres = cc
         )
 
         theater.updateState(warTheater)
-        //        theater.offlineSince.foreach(since => theater.offlineSince = Some((since - millis) % 10000))
       }
 
       def normalizePosition(p: Position, landScape: LandScape): Position = {
