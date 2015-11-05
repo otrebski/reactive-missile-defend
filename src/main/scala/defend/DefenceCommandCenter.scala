@@ -4,6 +4,7 @@ import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.{ ClusterDomainEvent, InitialStateAsEvents }
 import defend.cluster._
+import defend.ui.FileUi
 import pl.project13.scala.rainbow.Rainbow._
 
 import scala.annotation.tailrec
@@ -25,26 +26,16 @@ object DefenceCommandCenter extends App
   val cluster: Cluster = Cluster(system)
   cluster.subscribe(clusterMonitor, InitialStateAsEvents, classOf[ClusterDomainEvent])
   system.eventStream.subscribe(clusterMonitor, classOf[DeadLetter])
+
+  if (config.getBoolean("rmd.fileUI.use")){
+    val file: String = config.getString("rmd.fileUI.file")
+    println(s"Adding file ui with file $file".green )
+    system.actorOf(FileUi.props(file))
+  } else {
+    println("Not adding File UI. To use export USE_FILE_UI=true and FILE_UI=status.txt".green)
+  }
   println(" Defence started".green)
   println(""" Type "shutdown" to stop [call system.shutdown()]""".black.onYellow)
   println(""" Type "leave" to leave cluster [call cluster.leave(cluster.selfAddress)] """.black.onYellow)
 
-  //  commandLoop()
-
-  @tailrec
-  private def commandLoop(): Unit = {
-    val parser: CommandParser.Parser[Command] = CommandParser.shutdown | CommandParser.leave
-    Command(StdIn.readLine(), parser) match {
-      case Command.Shutdown =>
-        println("Shutting down".green)
-        system.terminate()
-      case Command.Leave =>
-        println("Leaving cluster".green)
-        cluster.leave(cluster.selfAddress)
-      case Command.Unknown(command, message) =>
-        println(s"Unknown command $command".red)
-        commandLoop()
-    }
-
-  }
 }
