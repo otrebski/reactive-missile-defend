@@ -45,7 +45,7 @@ And can be in color:
 
 ![Bomb](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/bomb.png) Bomb - slow small radius and medium damage
 
-![Nuke](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/radioactivity.png) - big damage and radius
+![Nuke](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/radioactivity.png) Nuke - big damage and radius
 
 ![Virus](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/game.png) Virus - Infect defence towers, move actor to Infected state for a few second. In this state tower can't shoot (actor is ingoring messages)
 
