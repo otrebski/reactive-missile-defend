@@ -10,6 +10,7 @@ class SharedJournalSetter extends Actor with SharedLevelDb {
   override def receive: Receive = {
     case MemberUp(m) if m.hasRole("shared-journal") =>
       val path = RootActorPath(m.address) / "user" / "store"
+      println("Received member is with shared-journal role, will setup shared journal on remote")
       setupSharedJournalOnRemote(path, context.system)
   }
 }

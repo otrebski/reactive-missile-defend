@@ -5,6 +5,7 @@ import java.util.Date
 
 import akka.actor._
 import com.typesafe.scalalogging.slf4j.LazyLogging
+import defend.PersistenceMonitor
 import defend.cluster._
 import defend.game._
 import defend.model._
@@ -28,6 +29,7 @@ object UiApp extends SimpleSwingApplication
 
   println("Starting".green)
 
+  system.actorOf(Props(new PersistenceMonitor(statusKeeperProxy, System.currentTimeMillis)))
   private val duration: Long = config.as[FiniteDuration]("akka.cluster.auto-down-unreachable-after").toMillis
   private val emptyWarTheater: WarTheater = WarTheater(List.empty, List.empty, List.empty, List.empty, LandScape(500, 500, 120), List.empty)
   private var gameEngine: Option[ActorRef] = None

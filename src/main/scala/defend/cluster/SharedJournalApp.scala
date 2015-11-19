@@ -21,7 +21,7 @@ object SharedJournalApp extends App
 
   startJournal(system)
 
-  system.actorOf(Props[SharedJournalSetter])
+  //  system.actorOf(Props[SharedJournalSetter])
 
   val cm = system.actorOf(Props(new ClusterMonitor))
   Cluster(system).subscribe(cm, InitialStateAsEvents,

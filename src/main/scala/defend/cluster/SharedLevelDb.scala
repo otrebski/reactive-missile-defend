@@ -19,15 +19,16 @@ trait SharedLevelDb {
   def setupSharedJournalOnRemote(path: ActorPath, system: ActorSystem): Unit = {
     // Start the shared journal one one node (don't crash this SPOF)
     // This will not be needed with a distributed journal
-    println("Startup shared journal".green)
+    println("setting up shared journal".cyan)
     //    println(s"Shared journal path is $path".onGreen)
     // register the shared journal
     import system.dispatcher
-    implicit val timeout = Timeout(15.seconds)
+    implicit val timeout = Timeout(5.seconds)
     val f = system.actorSelection(path) ? Identify(None)
     f.onSuccess {
       case ActorIdentity(_, Some(ref)) =>
-        println(s"Have actor identify of store $ref".green)
+        println(s"Have actor identify of store $ref".cyan)
+        println(s"Setting store for SharedLeveldbJournal.setStore(ref, system)".cyan)
         SharedLeveldbJournal.setStore(ref, system)
       case m: Any =>
         system.log.error("Shared journal not started at {}", path)

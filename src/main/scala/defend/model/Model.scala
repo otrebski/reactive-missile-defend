@@ -1,5 +1,7 @@
 package defend.model
 
+import defend.PersistenceMonitor.PersistenceState
+
 class Model
 
 trait Weapon {
@@ -76,16 +78,17 @@ case object CommandCenterUnreachable extends CommandCenterStatus
 
 //War theater
 case class WarTheater(
-  defence:        List[DefenceTowerStatus]          = List.empty,
-  city:           List[City]                        = List.empty,
-  alienWeapons:   List[WeaponInAction[AlienWeapon]] = List.empty,
-  humanWeapons:   List[WeaponInAction[HumanWeapon]] = List.empty,
-  landScape:      LandScape,
-  commandCentres: List[CommandCenter]               = List.empty,
-  explosions:     List[ExplosionEvent]              = List.empty,
-  points:         Integer                           = 0,
-  timestamp:      Long                              = System.currentTimeMillis(),
-  clusterLeader:  Option[String]                    = None
+  defence:          List[DefenceTowerStatus]          = List.empty,
+  city:             List[City]                        = List.empty,
+  alienWeapons:     List[WeaponInAction[AlienWeapon]] = List.empty,
+  humanWeapons:     List[WeaponInAction[HumanWeapon]] = List.empty,
+  landScape:        LandScape,
+  commandCentres:   List[CommandCenter]               = List.empty,
+  explosions:       List[ExplosionEvent]              = List.empty,
+  points:           Integer                           = 0,
+  timestamp:        Long                              = System.currentTimeMillis(),
+  clusterLeader:    Option[String]                    = None,
+  persistenceState: Option[PersistenceState]          = None
 
 )
 

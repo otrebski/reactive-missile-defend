@@ -7,6 +7,7 @@ import java.awt.{ Color, Font, FontMetrics, Polygon }
 import javax.imageio.ImageIO
 import javax.swing.Timer
 
+import defend.PersistenceMonitor.{ PersistenceError, PersistenceOk, PersistenceState }
 import defend._
 import defend.model._
 import defend.ui.CommandCenterIcons._
@@ -140,6 +141,7 @@ class JWarTheater(
     paintAlienWeapon(g, landScape, warTheater.alienWeapons)
     paintHumanWeapon(g, warTheater.humanWeapons, landScape)
     paintCommandCentres(g, warTheater.commandCentres, warTheater.defence, warTheater.clusterLeader, landScape)
+    paintPersistenceState(g, warTheater.persistenceState, landScape)
     paintPoints(g, warTheater.points, landScape)
     paintGameOver(g, warTheater.city, landScape)
     if (showGrid) {
@@ -190,12 +192,13 @@ class JWarTheater(
     d.setFont(font)
     val string = s"Points: $points"
     val metrics: FontMetrics = d.getFontMetrics
-    val x: Int = 10
-    val y: Int = scape.height - metrics.getHeight
     d.setColor(Color.BLACK)
-    d.fillRect(x - 1, y - 4, metrics.stringWidth(string) + 11, metrics.getHeight + 1)
+    val width: Int = metrics.stringWidth(string) + 11
+    val x: Int = scape.width / 2 - width / 2
+    val y: Int = scape.height - metrics.getHeight
+    d.fillRect(x - 1, y - 4, width, metrics.getHeight + 1)
     d.setColor(Color.WHITE)
-    d.drawRect(x - 1, y - 4, metrics.stringWidth(string) + 11, metrics.getHeight + 3)
+    d.drawRect(x - 1, y - 4, width, metrics.getHeight + 3)
     d.drawString(string, x + 5, scape.height - 5)
   }
 
@@ -490,6 +493,26 @@ class JWarTheater(
     d.setColor(Color.WHITE)
 
     d.drawString(s, rect.x + (rect.width - metrics.stringWidth(s)) / 2, rect.y + (rect.height + metrics.getHeight) / 2)
+  }
+
+  def paintPersistenceState(g: Graphics2D, persistenceState: Option[PersistenceState], scape: LandScape) = {
+    val font: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
+    val xPos: Int = 10
+    val yPos: Int = scape.groundLevel - 100
+    val height = 24
+    val state = persistenceState.map {
+      case p: PersistenceOk    => "   OK"
+      case p: PersistenceError => "Error"
+    }.getOrElse("    ?")
+    val s = s"  Persistence: $state  "
+    val metrics: FontMetrics = g.getFontMetrics(font)
+    val fontHeight: Int = metrics.getHeight
+    val rect: Rect = Rect(xPos, scape.height - yPos, metrics.stringWidth(s), height)
+    g.setColor(Color.BLACK)
+    g.fillRect(rect.x, rect.y, rect.width, rect.height)
+    g.setColor(Color.WHITE)
+    g.drawRect(rect.x, rect.y, rect.width, rect.height)
+    g.drawString(s, rect.x, rect.y + (rect.height + fontHeight) / 2)
   }
 
   def paintCities(d: Graphics2D, cities: List[City], landScape: LandScape): Unit = {

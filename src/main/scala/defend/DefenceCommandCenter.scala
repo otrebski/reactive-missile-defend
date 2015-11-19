@@ -7,9 +7,6 @@ import defend.cluster._
 import defend.ui.FileUi
 import pl.project13.scala.rainbow.Rainbow._
 
-import scala.annotation.tailrec
-import scala.io.StdIn
-
 object DefenceCommandCenter extends App
     with Roles.CommandCenterRole
     with SharedLevelDb
@@ -20,16 +17,16 @@ object DefenceCommandCenter extends App
     with ShutdownNode
     with Terminal {
 
-  system.actorOf(Props[SharedJournalSetter])
+  //  system.actorOf(Props[SharedJournalSetter])
 
   private val clusterMonitor: ActorRef = system.actorOf(Props(new ClusterMonitor))
   val cluster: Cluster = Cluster(system)
   cluster.subscribe(clusterMonitor, InitialStateAsEvents, classOf[ClusterDomainEvent])
   system.eventStream.subscribe(clusterMonitor, classOf[DeadLetter])
 
-  if (config.getBoolean("rmd.fileUI.use")){
+  if (config.getBoolean("rmd.fileUI.use")) {
     val file: String = config.getString("rmd.fileUI.file")
-    println(s"Adding file ui with file $file".green )
+    println(s"Adding file ui with file $file".green)
     system.actorOf(FileUi.props(file))
   } else {
     println("Not adding File UI. To use export USE_FILE_UI=true and FILE_UI=status.txt".green)
