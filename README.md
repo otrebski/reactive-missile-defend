@@ -50,7 +50,7 @@ And can be in color:
 ![Virus](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/game.png) Virus - Infect defence towers, move actor to Infected state for a few second. In this state tower can't shoot (actor is ingoring messages)
 
 [Slides from Krakow Scala User Group](https://rawgit.com/otrebski/reactive-missile-defend/master/doc/reactivemissledefend.html#slide-0)
-# How cluster look like #
+# How cluster looks like #
 Cluster should have following nodes:
 
 * Shared journal node (Shared level DB) (sbt sj)
