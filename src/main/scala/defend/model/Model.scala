@@ -1,6 +1,6 @@
 package defend.model
 
-import defend.PersistenceMonitor.PersistenceState
+import defend.PersistenceMonitor.{ PersistenceUnknown, PersistenceState }
 
 class Model
 
@@ -88,7 +88,7 @@ case class WarTheater(
   points:           Integer                           = 0,
   timestamp:        Long                              = System.currentTimeMillis(),
   clusterLeader:    Option[String]                    = None,
-  persistenceState: Option[PersistenceState]          = None
+  persistenceState: PersistenceState                  = PersistenceUnknown
 
 )
 

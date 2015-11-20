@@ -2,7 +2,7 @@ package defend.game
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.cluster.sharding.ClusterSharding
+import akka.cluster.sharding.{ ShardRegion, ClusterSharding }
 import akka.event.Logging.MDC
 import defend._
 import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick }
@@ -160,7 +160,7 @@ class GameEngine(
         implicit val ec = context.system.dispatcher
         context.system.scheduler.scheduleOnce(50 millis, self, Tick)
       } else {
-        defence.foreach(t => towerShard ! Envelope(t.name, PoisonPill))
+        defence.foreach(t => towerShard ! Envelope(t.name, ShardRegion.Passivate(PoisonPill)))
         gameOverCallback.foreach(_.apply())
       }
   }
@@ -171,11 +171,12 @@ class GameEngine(
 
   @throws[Exception](classOf[Exception])
   override def postStop(): Unit = {
+    log.info("Stopping game engine")
     super.postStop()
-    defence.foreach { t =>
-      towerShard ! Envelope(t.name, PoisonPill)
-    }
     towerPings.foreach(_.cancel())
+    defence.foreach { t =>
+      towerShard ! Envelope(t.name, ShardRegion.Passivate(PoisonPill))
+    }
   }
 }
 

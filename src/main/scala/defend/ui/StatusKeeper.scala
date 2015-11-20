@@ -4,10 +4,12 @@ import akka.actor._
 import akka.cluster.ClusterEvent.{ MemberRemoved, MemberUp, ReachableMember, UnreachableMember }
 import akka.cluster.{ Cluster, ClusterEvent }
 import akka.event.Logging.MDC
-import defend.PersistenceMonitor.PersistenceState
+import defend.PersistenceMonitor.{ PersistenceUnknown, PersistenceState }
 import defend.cluster.Roles
 import defend.model._
 import defend.ui.StatusKeeper.Protocol._
+
+import scala.language.postfixOps
 
 class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorLogging {
 
@@ -25,7 +27,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
   private var commandCenters: Map[String, CommandCenter] = Map.empty[String, CommandCenter]
   private var points: Integer = 0
   private var landscape: Option[LandScape] = None
-  private var persistenceState: Option[PersistenceState] = None
+  private var persistenceState: PersistenceState = PersistenceUnknown
 
   override def mdc(currentMessage: Any): MDC = {
     Map("node" -> Cluster(context.system).selfAddress.toString)
@@ -89,7 +91,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
 
-    case p: PersistenceState => persistenceState = Some(p)
+    case p: PersistenceState => persistenceState = p
   }
 
   def sendStatus(): Unit = {
@@ -112,6 +114,12 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
     }
 
     val now = timeProvider()
+    import scala.concurrent.duration._
+    val effectivePersistenceState: PersistenceState = if (persistenceState.timestamp < now - (20 seconds).toMillis) {
+      PersistenceUnknown
+    } else {
+      persistenceState
+    }
     val warTheater = WarTheater(
       defence          = towerUp,
       city             = cities,
@@ -123,7 +131,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
         previousExplosions.map(x => ExplosionEvent(x._1, 1 - (now - x._2) / explosionsDuration.toFloat)),
       points           = points,
       clusterLeader    = Cluster(context.system).state.leader.map(_.toString),
-      persistenceState = persistenceState
+      persistenceState = effectivePersistenceState
     )
     sender ! warTheater
   }

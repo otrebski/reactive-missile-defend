@@ -7,7 +7,7 @@ import java.awt.{ Color, Font, FontMetrics, Polygon }
 import javax.imageio.ImageIO
 import javax.swing.Timer
 
-import defend.PersistenceMonitor.{ PersistenceError, PersistenceOk, PersistenceState }
+import defend.PersistenceMonitor.{ PersistenceUnknown, PersistenceError, PersistenceOk, PersistenceState }
 import defend._
 import defend.model._
 import defend.ui.CommandCenterIcons._
@@ -60,6 +60,10 @@ class JWarTheater(
   private val bombIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/bomb.png"))
   private val empIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/game.png"))
   private val serverIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/server-cloud.png"))
+  private val okIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tick-octagon-frame.png"))
+  private val errorIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/cross-octagon-frame.png"))
+  private val unknownIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/question-octagon-frame.png"))
+
   private var paintTimestamp = Queue[Long]()
   private var selectedTower: Option[DefenceTowerStatus] = None
   private var selectedCommandCenter: Option[String] = None
@@ -495,24 +499,27 @@ class JWarTheater(
     d.drawString(s, rect.x + (rect.width - metrics.stringWidth(s)) / 2, rect.y + (rect.height + metrics.getHeight) / 2)
   }
 
-  def paintPersistenceState(g: Graphics2D, persistenceState: Option[PersistenceState], scape: LandScape) = {
+  def paintPersistenceState(g: Graphics2D, persistenceState: PersistenceState, scape: LandScape) = {
     val font: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
     val xPos: Int = 10
     val yPos: Int = scape.groundLevel - 100
     val height = 24
-    val state = persistenceState.map {
-      case p: PersistenceOk    => "   OK"
-      case p: PersistenceError => "Error"
-    }.getOrElse("    ?")
-    val s = s"  Persistence: $state  "
+    val (color, icon) = persistenceState match {
+      case p: PersistenceOk    => (Color.GREEN, okIcon)
+      case p: PersistenceError => (Color.RED, errorIcon)
+      case PersistenceUnknown  => (Color.WHITE, unknownIcon)
+    }
+    val s = s"  Persistence: "
     val metrics: FontMetrics = g.getFontMetrics(font)
     val fontHeight: Int = metrics.getHeight
-    val rect: Rect = Rect(xPos, scape.height - yPos, metrics.stringWidth(s), height)
+    val rect: Rect = Rect(xPos, scape.height - yPos, metrics.stringWidth(s) + icon.getWidth + 10, height)
     g.setColor(Color.BLACK)
     g.fillRect(rect.x, rect.y, rect.width, rect.height)
     g.setColor(Color.WHITE)
     g.drawRect(rect.x, rect.y, rect.width, rect.height)
+    g.setColor(color)
     g.drawString(s, rect.x, rect.y + (rect.height + fontHeight) / 2)
+    g.drawImage(icon, rect.x + metrics.stringWidth(s), rect.y + (rect.height - icon.getHeight) / 2, null)
   }
 
   def paintCities(d: Graphics2D, cities: List[City], landScape: LandScape): Unit = {
