@@ -4,15 +4,21 @@ import java.io.FileOutputStream
 
 import akka.actor._
 import akka.cluster.ClusterEvent._
-import akka.cluster.{Cluster, ClusterEvent}
+import akka.cluster.{ Cluster, ClusterEvent }
 import akka.event.Logging.MDC
 import defend.cluster.Roles
 import defend.model._
 
+import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
+/**
+ * FileUI actor is saving game status to file, so it can be easily parsed with CLI and displayed on
+ * Raspberry PI devices like PiFace
+ * @param file output file
+ */
 class FileUi(val file: String) extends Actor with DiagnosticActorLogging {
 
   private var commandCenters: Map[String, CommandCenter] = Map.empty[String, CommandCenter]
@@ -70,11 +76,15 @@ class FileUi(val file: String) extends Actor with DiagnosticActorLogging {
 }
 
 object FileUi {
+  private val DefaultStatus = Map(CommandCenterOnline -> 0, CommandCenterOffline -> 0, CommandCenterUnreachable -> 0)
 
   def props(file: String) = Props(classOf[FileUi], file)
 
   def warTheaterToString(commandCenters: Map[String, CommandCenter]): String = {
     val statusCount: Map[CommandCenterStatus, Iterable[CommandCenter]] = commandCenters.values.groupBy(_.status)
-    statusCount.map(v => s"${v._1}:${v._2.size}").mkString(" ")
+    val map: immutable.Iterable[String] = statusCount.map(v => s"${v._1}:${v._2.size}")
+    //    DefaultStatus.compose(map)
+    //TODO merge default with map
+    map.mkString("\n")
   }
 }
