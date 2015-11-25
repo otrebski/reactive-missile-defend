@@ -1,6 +1,7 @@
 package defend.model
 
-import defend.PersistenceMonitor.{ PersistenceUnknown, PersistenceState }
+import defend.PersistenceMonitor.{ PersistenceState, PersistenceUnknown }
+import defend.ui.StatusKeeper.Protocol.LostMessages
 
 class Model
 
@@ -88,7 +89,8 @@ case class WarTheater(
   points:           Integer                           = 0,
   timestamp:        Long                              = System.currentTimeMillis(),
   clusterLeader:    Option[String]                    = None,
-  persistenceState: PersistenceState                  = PersistenceUnknown
+  persistenceState: PersistenceState                  = PersistenceUnknown,
+  lostMessages:     List[LostMessages]                = List.empty[LostMessages]
 
 )
 

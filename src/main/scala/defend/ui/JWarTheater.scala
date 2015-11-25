@@ -7,11 +7,12 @@ import java.awt.{ Color, Font, FontMetrics, Polygon }
 import javax.imageio.ImageIO
 import javax.swing.Timer
 
-import defend.PersistenceMonitor.{ PersistenceUnknown, PersistenceError, PersistenceOk, PersistenceState }
+import defend.PersistenceMonitor.{ PersistenceError, PersistenceOk, PersistenceState, PersistenceUnknown }
 import defend._
 import defend.model._
 import defend.ui.CommandCenterIcons._
 import defend.ui.JWarTheater.CommandCenterPopupAction
+import defend.ui.StatusKeeper.Protocol.LostMessages
 
 import scala.collection.immutable.Queue
 import scala.language.implicitConversions
@@ -44,6 +45,7 @@ class JWarTheater(
   minimumSize = preferredSize
 
   private val debugFont: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
+  private val towerInfoFont: swing.Font = new swing.Font("Courier", Font.BOLD, 13)
   private val offlineTowerFont: swing.Font = new swing.Font("Arial", Font.BOLD, 14)
   private val offlineStatusKeeperFont: swing.Font = new swing.Font("Arial", Font.BOLD, 32)
   private val cityIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/city.png"))
@@ -63,6 +65,8 @@ class JWarTheater(
   private val okIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tick-octagon-frame.png"))
   private val errorIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/cross-octagon-frame.png"))
   private val unknownIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/question-octagon-frame.png"))
+
+  private val lostMessageIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/mail--exclamation.png"))
 
   private var paintTimestamp = Queue[Long]()
   private var selectedTower: Option[DefenceTowerStatus] = None
@@ -141,7 +145,7 @@ class JWarTheater(
     paintExplosions(g, landScape, warTheater.explosions)
     paintLandScape(g, landScape)
     paintCities(g, warTheater.city, landScape)
-    paintDefence(g, warTheater.defence, landScape)
+    paintDefence(g, warTheater.defence, landScape, warTheater.lostMessages)
     paintAlienWeapon(g, landScape, warTheater.alienWeapons)
     paintHumanWeapon(g, warTheater.humanWeapons, landScape)
     paintCommandCentres(g, warTheater.commandCentres, warTheater.defence, warTheater.clusterLeader, landScape)
@@ -151,7 +155,7 @@ class JWarTheater(
     if (showGrid) {
       paintGrid(g, landScape)
     }
-    paintSelectedDefence(g, warTheater.landScape, warTheater.defence)
+    paintSelectedDefence(g, warTheater.landScape, warTheater.defence, warTheater.lostMessages)
     if (paintDebug) {
       paintDebug(g, paintingStart, timeProvider() - warTheater.timestamp)
     }
@@ -261,7 +265,7 @@ class JWarTheater(
     g.drawString(s"Situation from ${delay}ms ago", 10, 60)
   }
 
-  def paintDefence(d: Graphics2D, towers: List[DefenceTowerStatus], landScape: LandScape): Unit = {
+  def paintDefence(d: Graphics2D, towers: List[DefenceTowerStatus], landScape: LandScape, lostMessages: List[LostMessages]): Unit = {
     towers.foreach {
       t =>
         val icon = t match {
@@ -285,8 +289,9 @@ class JWarTheater(
         d.setColor(Color.BLACK)
         d.drawRect(x - icon.getWidth / 2, landScape.height - y + 5, icon.getWidth, 10)
         d.setFont(debugFont)
-        d.setColor(Color.BLACK)
+
         //paint offline time
+        d.setColor(Color.BLACK)
         if (!t.isUp) {
           t.lastMessageTimestamp.foreach {
             ts =>
@@ -301,6 +306,24 @@ class JWarTheater(
         t.commandCenterName.map(iconForCommandCentre).forall {
           img =>
             paintIcon(d, landScape, img, x, y - icon.getHeight - 10)
+        }
+
+        //paint lost messages
+        val lostMessagesByTower = lostMessages
+          .filter(_.tower == t.defenceTower)
+          .map(_.lostMessages)
+          .sum
+
+        if (lostMessagesByTower > 0) {
+          d.setFont(debugFont)
+          d.setColor(Color.RED)
+          val metrics: FontMetrics = d.getFontMetrics()
+          val s: String = s"$lostMessagesByTower"
+          metrics.stringWidth(s)
+          d.drawString(s, x - metrics.stringWidth(s) / 2, landScape.height - y + 45)
+          if (timeProvider() % 1000 < 800) {
+            d.drawImage(lostMessageIcon, x - lostMessageIcon.getWidth / 2, landScape.height - y + 45, null)
+          }
         }
 
         //paint if CC is selected
@@ -323,9 +346,11 @@ class JWarTheater(
     new swing.Color(255, d, d)
   }
 
-  def paintSelectedDefence(g: Graphics2D, landScape: LandScape, defence: List[DefenceTowerStatus]) = {
+  def paintSelectedDefence(g: Graphics2D, landScape: LandScape, defence: List[DefenceTowerStatus], lostMessages: List[LostMessages]) = {
     selectedTower.flatMap(t => defence.find(_.defenceTower.position == t.defenceTower.position)).foreach {
       t =>
+        val lostMessagesCount = lostMessages.filter(_.tower == t.defenceTower).map(_.lostMessages).sum
+
         val position: Position = t.defenceTower.position
         val range: Int = rangeForLevel(t.level)
         val x = position.x - range
@@ -341,7 +366,8 @@ class JWarTheater(
           f"""|${t.defenceTower.name}
               |Level: ${t.level}
               |Range: $range
-              |Angle error: $degrees%2.1f°""".stripMargin
+              |Angle error: $degrees%2.1f°
+              |Lost messages: $lostMessagesCount""".stripMargin
         g.setFont(debugFont)
         val metrics: FontMetrics = g.getFontMetrics
         val height = metrics.getHeight
@@ -352,7 +378,7 @@ class JWarTheater(
 
         val border = 4
         g.setColor(selectedTowerInfoColor)
-        val yPos: Int = landScape.height - position.y - 5 * height
+        val yPos: Int = landScape.height - position.y - (lines.length + 1) * height
         g.fillRect(xPox - border, yPos - height - border, maxWidth + 2 * border, lines.length * height + 2 * border)
         g.fillPolygon(new Polygon(
           Array(position.x.toInt, position.x.toInt - height, position.x.toInt + height),
@@ -440,7 +466,7 @@ class JWarTheater(
     val metrics: FontMetrics = d.getFontMetrics(font)
     val fontHeight: Int = metrics.getHeight
     val xPos: Int = 10
-    val yPos: Int = scape.groundLevel - 70
+    val yPos: Int = scape.groundLevel - 90
     val height = 24
     val rightCorner = centers.foldLeft(xPos) { (xPos, center) =>
       val towersInCc = towers.count(_.commandCenterName.contains(center.name))
@@ -502,7 +528,7 @@ class JWarTheater(
   def paintPersistenceState(g: Graphics2D, persistenceState: PersistenceState, scape: LandScape) = {
     val font: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
     val xPos: Int = 10
-    val yPos: Int = scape.groundLevel - 100
+    val yPos: Int = scape.groundLevel - 120
     val height = 24
     val (color, icon) = persistenceState match {
       case p: PersistenceOk    => (Color.GREEN, okIcon)
@@ -593,7 +619,7 @@ object JWarTheater extends SimpleSwingApplication {
   override def top: Frame = new MainFrame {
 
     val points = Range(0, 800, 50).map(i => Position(i, 600 + 100 * Math.sin(i.toFloat / 40)))
-    val landScapeA = LandScape(800, 600, 130)
+    val landScapeA = LandScape(800, 600, 150)
     val (cities, defence) = Range(30, landScapeA.width, 28).foldRight((List.empty[City], List.empty[DefenceTower])) {
       (i, b) =>
         if (i % 5 == 1) {
@@ -655,8 +681,22 @@ object JWarTheater extends SimpleSwingApplication {
         lastMessageTimestamp = Some(400)
       ))
 
+    val lostMessages = towerStatuses
+      .map { t =>
+        LostMessages(t.defenceTower, t.defenceTower.position.x.toInt % 56, 0)
+      }
+      .filter(_.lostMessages > 0)
+
+    towerStatuses.foreach {
+      t =>
+        val lostMessagesByTower = lostMessages
+          .filter(_.tower == t.defenceTower)
+          .map(_.lostMessages)
+          .sum
+    }
+
     var warTheater: WarTheater = WarTheater(towerStatuses, cities, enemyWeapons,
-      humanWeapons, landScape = landScapeA, commandCentres = commandCentres, explosions = explosions)
+      humanWeapons, landScape = landScapeA, commandCentres = commandCentres, explosions = explosions, lostMessages = lostMessages)
 
     title = "Missile defend test"
     val dragFun = new ((DragEvent) => Unit) {

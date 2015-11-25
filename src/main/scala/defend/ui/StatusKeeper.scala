@@ -10,10 +10,12 @@ import defend.model._
 import defend.ui.StatusKeeper.Protocol._
 
 import scala.language.postfixOps
+import scala.concurrent.duration._
 
 class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorLogging {
 
-  private val explosionsDuration: Int = 1000
+  private val explosionsDuration: Long = (1 second).toMillis
+  private val lostMessagesDuration: Long = (10 seconds).toMillis
   private val KeepAliveTimeout = 500
 
   private var humanMissiles: List[WeaponInAction[HumanWeapon]] = Nil
@@ -28,6 +30,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
   private var points: Integer = 0
   private var landscape: Option[LandScape] = None
   private var persistenceState: PersistenceState = PersistenceUnknown
+  private var lostMessages: List[LostMessages] = List.empty[LostMessages]
 
   override def mdc(currentMessage: Any): MDC = {
     Map("node" -> Cluster(context.system).selfAddress.toString)
@@ -92,10 +95,18 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
 
     case p: PersistenceState => persistenceState = p
+
+    case lm @ LostMessages(tower, count, timestamp) =>
+      import pl.project13.scala.rainbow.Rainbow._
+      println(s"Tower ${tower.name} has lost $count messages at $timestamp".red)
+      lostMessages = lm :: lostMessages
   }
 
   def sendStatus(): Unit = {
+
     previousExplosions = previousExplosions.filter(explosionFilter)
+    lostMessages = lostMessages.filter(lostMessagesFilter)
+
     val towerUp: List[DefenceTowerStatus] = defenceTowers.map {
       d =>
         val t: Long = towersLastKeepAlive.getOrElse(d.name, 0)
@@ -109,7 +120,6 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
           commandCenterName    = n,
           level                = defenceTowersStatus.get(d.name).map(_.level).getOrElse(0),
           lastMessageTimestamp = Some(t)
-
         )
     }
 
@@ -131,7 +141,8 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
         previousExplosions.map(x => ExplosionEvent(x._1, 1 - (now - x._2) / explosionsDuration.toFloat)),
       points           = points,
       clusterLeader    = Cluster(context.system).state.leader.map(_.toString),
-      persistenceState = effectivePersistenceState
+      persistenceState = effectivePersistenceState,
+      lostMessages     = lostMessages
     )
     sender ! warTheater
   }
@@ -150,6 +161,10 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
   val explosionFilter: ((Explosion, Long)) => Boolean = {
     x => timeProvider() - x._2 < explosionsDuration
   }
+
+  val lostMessagesFilter: (LostMessages) => Boolean = {
+    x => timeProvider() - x.timestamp < lostMessagesDuration
+  }
 }
 
 object StatusKeeper {
@@ -166,6 +181,7 @@ object StatusKeeper {
 
     case class TowerKeepAlive(id: String, commandCenterName: String, towerState: DefenceTowerState, level: Int)
 
+    case class LostMessages(tower: DefenceTower, lostMessages: Int, timestamp: Long)
   }
 
 }
