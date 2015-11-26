@@ -171,5 +171,7 @@ Start nodes:
   
   ```
   
-  
+  # License
+   Code is available under Apache Commons 2.0 License
+   Icons are available under a Creative Commons Attribution 3.0 License. Most icons are downloaded from http://p.yusukekamiyamane.com/
   
