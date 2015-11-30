@@ -99,7 +99,8 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
     case lm @ LostMessages(tower, count, timestamp) =>
       import pl.project13.scala.rainbow.Rainbow._
       println(s"Tower ${tower.name} has lost $count messages at $timestamp".red)
-      lostMessages = lm :: lostMessages
+      //hack for using with Raspberry PI without time synchronization
+      lostMessages = lm.copy(timestamp = timeProvider()) :: lostMessages
   }
 
   def sendStatus(): Unit = {
