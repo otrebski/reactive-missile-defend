@@ -150,6 +150,8 @@ class StatusKeeperTest extends TestKit(ActorSystem("defend", ConfigFactory.load(
   }
 
   override protected def afterAll(): Unit = {
+    super.afterAll()
+    println("Shuting down actor system after")
     system.terminate()
   }
 }

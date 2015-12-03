@@ -5,18 +5,18 @@ import akka.testkit.{ TestKit, TestProbe }
 import com.typesafe.config.ConfigFactory
 import defend.game.GameEngine.Protocol.RocketFired
 import defend.model._
-import defend.shard.TowerActor.Protocol.{ExperienceGained, Ping, Situation}
+import defend.shard.TowerActor.Protocol.{ ExperienceGained, Ping, Situation }
 import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
 import org.scalatest.{ BeforeAndAfterAll, Matchers, WordSpecLike }
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class TowerFsmActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("application-test.conf"))) with WordSpecLike with Matchers with BeforeAndAfterAll {
+class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("application-test.conf"))) with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   private val tower: DefenceTower = DefenceTower("A", Position(0, 0))
-  private val situation: Situation = Situation(0,tower, Nil, LandScape(200, 100, 50))
-  private val situationWithIncoming: Situation = Situation(1,tower, List(WeaponInAction(AlienBomb(1, 1), Position(10, 100), MoveVector(0, 0))), LandScape(200, 100, 50))
+  private val situation: Situation = Situation(0, tower, Nil, LandScape(200, 100, 50))
+  private val situationWithIncoming: Situation = Situation(1, tower, List(WeaponInAction(AlienBomb(1, 1), Position(10, 100), MoveVector(0, 0))), LandScape(200, 100, 50))
 
   "TowerFsmActor" should {
 
@@ -30,7 +30,7 @@ class TowerFsmActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load
       underTest ! situation
       underTest ! Ping
 
-      statusKeeper.expectMsgPF(1 second) {
+      statusKeeper.expectMsgPF(21 second) {
         case t: TowerKeepAlive =>
           t.towerState shouldBe DefenceTowerReady
         case x: Any => throw new Exception(s"Received wrong message $x")
@@ -104,8 +104,14 @@ class TowerFsmActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load
 
   }
 
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+    print("Running before all tests")
+  }
+
   override protected def afterAll(): Unit = {
     super.afterAll()
+    println("Killing actor system after tests")
     system.terminate()
   }
 }
