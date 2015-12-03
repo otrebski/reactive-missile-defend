@@ -7,7 +7,7 @@ import java.awt.{ Color, Font, FontMetrics, Polygon }
 import javax.imageio.ImageIO
 import javax.swing.Timer
 
-import defend.PersistenceMonitor.{ PersistenceError, PersistenceOk, PersistenceState, PersistenceUnknown }
+import defend.PersistenceMonitor.{ PersistenceError, PersistenceOk, PersistenceState }
 import defend._
 import defend.model._
 import defend.ui.CommandCenterIcons._
@@ -461,6 +461,7 @@ class JWarTheater(
   }
 
   def paintCommandCentres(d: Graphics2D, centers: List[CommandCenter], towers: List[DefenceTowerStatus], clusterLeader: Option[String], scape: LandScape): Unit = {
+    commandCenterOnScreen = Map.empty[Rect, String]
     val font: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
     d.setFont(font)
     val metrics: FontMetrics = d.getFontMetrics(font)
