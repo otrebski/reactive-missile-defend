@@ -89,7 +89,7 @@ case class WarTheater(
   points:           Integer                           = 0,
   timestamp:        Long                              = System.currentTimeMillis(),
   clusterLeader:    Option[String]                    = None,
-  persistenceState: PersistenceState                  = PersistenceUnknown,
+  persistenceState: PersistenceState                  = PersistenceUnknown(),
   lostMessages:     List[LostMessages]                = List.empty[LostMessages]
 
 )

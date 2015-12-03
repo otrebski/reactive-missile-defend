@@ -29,7 +29,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
   private var commandCenters: Map[String, CommandCenter] = Map.empty[String, CommandCenter]
   private var points: Integer = 0
   private var landscape: Option[LandScape] = None
-  private var persistenceState: PersistenceState = PersistenceUnknown
+  private var persistenceState: PersistenceState = PersistenceUnknown()
   private var lostMessages: List[LostMessages] = List.empty[LostMessages]
 
   override def mdc(currentMessage: Any): MDC = {
@@ -127,7 +127,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
     val now = timeProvider()
     import scala.concurrent.duration._
     val effectivePersistenceState: PersistenceState = if (persistenceState.timestamp < now - (20 seconds).toMillis) {
-      PersistenceUnknown
+      PersistenceUnknown()
     } else {
       persistenceState
     }

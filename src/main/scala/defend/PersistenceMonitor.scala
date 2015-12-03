@@ -76,7 +76,7 @@ object PersistenceMonitor {
 
   case class PersistenceError(timestamp: Long) extends PersistenceState
 
-  object PersistenceUnknown extends PersistenceState {
+  case class PersistenceUnknown() extends PersistenceState {
     override val timestamp: Long = 0
   }
 

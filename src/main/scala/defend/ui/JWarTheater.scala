@@ -533,7 +533,7 @@ class JWarTheater(
     val (color, icon) = persistenceState match {
       case p: PersistenceOk    => (Color.GREEN, okIcon)
       case p: PersistenceError => (Color.RED, errorIcon)
-      case PersistenceUnknown  => (Color.WHITE, unknownIcon)
+      case _                   => (Color.WHITE, unknownIcon)
     }
     val s = s"  Persistence: "
     val metrics: FontMetrics = g.getFontMetrics(font)
