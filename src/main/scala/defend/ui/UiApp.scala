@@ -35,7 +35,8 @@ object UiApp extends SimpleSwingApplication
   private var gameEngine: Option[ActorRef] = None
   private val dragFunction = new ((DragEvent) => Unit) {
     override def apply(v1: DragEvent): Unit = {
-      gameEngine.filter(_ => v1.moveVector.speed > 10).foreach(_ ! GameEngine.Protocol.AlienRocketFired(AlienMissile(1, 10), v1.start, v1.moveVector, None))
+      gameEngine.filter(_ => v1.moveVector.speed > 10)
+        .foreach(_ ! GameEngine.Protocol.AlienRocketFired(AlienMissile(16, 30), v1.start, v1.moveVector, None))
     }
   }
 
