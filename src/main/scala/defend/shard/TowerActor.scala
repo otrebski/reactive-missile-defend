@@ -14,14 +14,14 @@ import defend.model._
 import defend.shard.FsmProtocol.{ AddExperience, DomainEvent, ScheduledStateChangeAgUpdate, UpdateSelf }
 import defend.shard.TowerActor.Protocol.{ MessageOfDeath, Ping, Reloaded, Situation }
 import defend.ui.StatusKeeper
-import defend.ui.StatusKeeper.Protocol.{ LostMessages, TowerKeepAlive }
+import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
 import pl.project13.scala.rainbow.Rainbow._
 
-import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.Random
+import scala.collection.JavaConversions._
 
 sealed trait TowerFsmState extends FSMState
 
@@ -46,15 +46,13 @@ case class TowerFsMData(
 
 object FsmProtocol {
 
-  sealed trait DomainEvent {
-    val lastId: Int
-  }
+  sealed trait DomainEvent
 
-  case class AddExperience(lastId: Int, exp: Int, date: Date) extends DomainEvent
+  case class AddExperience(exp: Int, date: Date) extends DomainEvent
 
-  case class ScheduledStateChangeAgUpdate(lastId: Int, at: Option[Long]) extends DomainEvent
+  case class ScheduledStateChangeAgUpdate(at: Option[Long]) extends DomainEvent
 
-  case class UpdateSelf(lastId: Int, me: Option[DefenceTower]) extends DomainEvent
+  case class UpdateSelf(id: Int, me: Option[DefenceTower]) extends DomainEvent
 
 }
 
@@ -88,12 +86,12 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
   }
 
   override def applyEvent(domainEvent: DomainEvent, currentData: TowerFsMData): TowerFsMData = domainEvent match {
-    case AddExperience(lastId, exp, date) =>
+    case AddExperience(exp, date) =>
       log.info(s"Gained $exp experience points at ${timeFormat.format(date)}")
-      currentData.copy(experience = currentData.experience + exp, lastMessageId = lastId)
-    case ScheduledStateChangeAgUpdate(lastId, at) =>
+      currentData.copy(experience = currentData.experience + exp)
+    case ScheduledStateChangeAgUpdate(at) =>
       log.info("Scheduled state change")
-      currentData.copy(scheduledStateChangeAt = at, lastMessageId = lastId)
+      currentData.copy(scheduledStateChangeAt = at)
     case UpdateSelf(index, me) =>
       log.info(s"Updating self to $me")
       currentData.copy(me = me, lastMessageId = index)
@@ -103,12 +101,6 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
 
   when(FsmReady) {
     case Event(situation: Situation, data) =>
-
-      val lostMessages = situation.index - data.lastMessageId - 1
-      if (lostMessages > 0) {
-        statusKeeper ! LostMessages(situation.me, lostMessages, System.currentTimeMillis())
-      }
-
       log.info(s"Received situation ${situation.index}")
       val level = experienceToLevel(data.experience)
       val speed: Double = 70 + level * 30 + Random.nextInt(30)
@@ -126,9 +118,13 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
           .foreach(sender() ! _)
         val reducedReloadTime: Double = reduceByLevel(reloadTime.toMillis, level, nextLevelReduction)
         val reloadAt: Option[Long] = Some(System.currentTimeMillis() + (reducedReloadTime / 2 + Random.nextInt(reducedReloadTime.toInt / 2)).toLong)
-        goto(FsmReloading) applying ScheduledStateChangeAgUpdate(situation.index, reloadAt)
+        goto(FsmReloading) applying ScheduledStateChangeAgUpdate(reloadAt)
       } else {
-        stay() applying UpdateSelf(situation.index, Some(situation.me))
+        if (data.me.contains(situation.me)) {
+          stay()
+        } else {
+          stay() applying UpdateSelf(situation.index, Some(situation.me))
+        }
       }
   }
 
@@ -137,20 +133,17 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
       log.info(s"Tower ${data.me} reloaded")
       goto(FsmReady)
     case Event(s: Situation, data) =>
-      //TODO export partial function
       log.info(s"Received situation ${s.index}")
-      val lostMessages = s.index - data.lastMessageId - 1
-      if (lostMessages > 0) {
-        statusKeeper ! LostMessages(s.me, lostMessages, System.currentTimeMillis())
+      if (data.me.contains(s.me)) {
+        stay()
+      } else {
+        stay() applying UpdateSelf(s.index, Some(s.me))
       }
-      stay() applying UpdateSelf(s.index, Some(s.me))
   }
 
   when(FsmInfected) {
-    case Event(s: Situation, TowerFsMData(_, _, lastId, Some(ts))) if ts < System.currentTimeMillis() =>
-      goto(FsmReady) applying ScheduledStateChangeAgUpdate(lastId = s.index, None)
-    case Event(_, TowerFsMData(_, _, lastId, Some(ts))) if ts < System.currentTimeMillis() =>
-      goto(FsmReady) applying ScheduledStateChangeAgUpdate(lastId = lastId, None)
+    case Event(_, TowerFsMData(_, _, _, Some(ts))) if ts < System.currentTimeMillis() =>
+      goto(FsmReady) applying ScheduledStateChangeAgUpdate(None)
   }
 
   whenUnhandled {
@@ -167,17 +160,16 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
       log.debug("Sending keep alive from {} with {}: {}", name, state, keepAlive)
       statusKeeper ! keepAlive
       stay()
-    case Event(TowerActor.Protocol.ExperienceGained(exp), data) => stay() applying AddExperience(data.lastMessageId, exp, new Date())
+    case Event(TowerActor.Protocol.ExperienceGained(exp), data) => stay() applying AddExperience(exp, new Date())
     case Event(MessageOfDeath(alienEmp, count), data) =>
-      goto(FsmInfected) applying ScheduledStateChangeAgUpdate(data.lastMessageId, Some(System.currentTimeMillis() + count * 1000))
+      goto(FsmInfected) applying ScheduledStateChangeAgUpdate(Some(System.currentTimeMillis() + count * 1000))
     case Event(s: Situation, data) =>
       log.info(s"Received situation ${s.index}")
-      //TODO export partial function
-      val lostMessages = s.index - data.lastMessageId - 1
-      if (lostMessages > 0) {
-        statusKeeper ! LostMessages(s.me, lostMessages, System.currentTimeMillis())
+      if (data.me.contains(s.me)) {
+        stay()
+      } else {
+        stay() applying UpdateSelf(s.index, Some(s.me))
       }
-      stay() applying UpdateSelf(s.index, Some(s.me))
 
     case a: Any =>
       log.debug("Unhandled message {}", a)
