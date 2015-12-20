@@ -64,6 +64,7 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
   val nextLevelReduction = 0.05
   val commandCenterName = Cluster(context.system).selfAddress.toString
   private val timeFormat = new SimpleDateFormat("HH:mm:ss")
+  private var messageLostTracer: Option[ActorRef] = None
 
   @throws[Exception](classOf[Exception]) override def preStart(): Unit = {
     log.setMDC(mdc(()))
@@ -201,6 +202,11 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
     println(s"Stopping $persistenceId on $commandCenterName".white.onBlue)
     super.postStop()
     log.clearMDC()
+  }
+
+  def sendLostMessage(): Unit = {
+    //TODO  Start actor and send messages lost
+    //messageLostTracer.getOrElse(context.)
   }
 }
 
