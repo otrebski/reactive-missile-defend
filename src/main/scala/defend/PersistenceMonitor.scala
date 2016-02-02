@@ -90,7 +90,6 @@ class TestingPersistentActor(id: String) extends PersistentActor {
     case SnapshotOffer(c, Save(s)) => status = s
     case RecoveryCompleted         =>
     case Save(s)                   => status = s
-    //      deleteMessages(toSequenceNr = Long.MaxValue)
     case a: Any                    => println(s"Recover Unknown message: $a".yellow)
   }
 

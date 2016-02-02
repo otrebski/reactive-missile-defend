@@ -2,7 +2,7 @@ package defend.cluster
 
 import akka.actor.{ ActorRef, ActorSystem }
 import akka.cluster.sharding.{ ClusterSharding, ClusterShardingSettings }
-import defend.shard.TowerActor
+import defend.shard.TowerGuard
 import pl.project13.scala.rainbow.Rainbow._
 trait TowerShard {
 
@@ -14,11 +14,11 @@ trait TowerShard {
   val settings: ClusterShardingSettings = ClusterShardingSettings(system).withRole(Some(Roles.Tower))
   val towerShard: ActorRef = {
     ClusterSharding(system).start(
-      typeName        = TowerActor.shardRegion,
-      entityProps     = TowerActor.props(statusKeeperProxy),
+      typeName        = TowerGuard.shardRegion,
+      entityProps     = TowerGuard.props(statusKeeperProxy),
       settings        = settings,
-      extractEntityId = TowerActor.extractEntityId,
-      extractShardId  = TowerActor.extractShardId
+      extractEntityId = TowerGuard.extractEntityId,
+      extractShardId  = TowerGuard.extractShardId
     )
   }
   println(s"Tower shard started: $towerShard ".white.onBlue)

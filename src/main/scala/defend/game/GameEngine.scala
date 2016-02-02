@@ -7,7 +7,7 @@ import akka.event.Logging.MDC
 import defend._
 import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick }
 import defend.model._
-import defend.shard.TowerActor
+import defend.shard.{ TowerGuard, TowerActor }
 import defend.shard.TowerActor.Protocol.MessageOfDeath
 
 import scala.concurrent.duration._
@@ -34,7 +34,7 @@ class GameEngine(
   private val waveGeneratorActor = context.actorOf(EnemyGenerator.props(System.currentTimeMillis(), System.currentTimeMillis, waveGenerator))
 
   implicit val ec = context.system.dispatcher
-  private val towerShard: ActorRef = ClusterSharding(context.system).shardRegion(TowerActor.shardRegion)
+  private val towerShard: ActorRef = ClusterSharding(context.system).shardRegion(TowerGuard.shardRegion)
   private val towerPings: List[Cancellable] = defence.map(d => context.system.scheduler.schedule(10 millis, 100 millis, towerShard, Envelope(d.name, TowerActor.Protocol.Ping)))
   private val selfAddress: Address = Cluster(context.system).selfAddress
   private var index = 0
