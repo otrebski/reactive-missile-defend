@@ -58,6 +58,29 @@ Cluster should have following nodes:
 * Command centers to run defence tower logic (choosing target and calculating interception vector) (sbt cc)
 * Optional CLI UI (sbt cliui)
 
+# Requirements #
+
+## Cassandra as persistence ##
+
+This project uses Cassandra 2.2 as a persistence. You can run cassandra using [Docker](https://www.docker.com/) or connect to existing Cassandra cluster. Two keyspaces will be created:
+* rmd_journal - for journal
+* rmd_snapshot - for snapshots
+These keyspaces can be deleted between running game.
+
+### Using Cassandra from docker ###
+```
+docker pull cassandra:2.2
+
+docker run -d -p 9042:9042 --name cass cassandra:2.2
+```
+If you are Windows or OSX user you have to add port forwarding for port 9042.
+
+### Specify Cassandra host using environment variables
+By default Cassandra host is 127.0.0.1
+```
+export=CASSANDRA_HOST=myIp
+```
+
 # How to run only local nodes (using SBT): #
 First start shared journal. It will be also seed node. This node is Single Point Of Failure, so do not kill it. First export configuration:
 

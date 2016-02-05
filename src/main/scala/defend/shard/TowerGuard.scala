@@ -3,8 +3,8 @@ package defend.shard
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props }
 import akka.cluster.sharding.ShardRegion
-import akka.pattern.PipeToSupport
-import com.datastax.driver.core.exceptions.ReadFailureException
+import akka.pattern.{ BackoffSupervisor, PipeToSupport }
+import com.datastax.driver.core.exceptions.ReadTimeoutException
 import defend.Envelope
 import defend.shard.MessageLostTracker.LastMessageId
 import defend.shard.TowerActor.Protocol.Situation
@@ -20,14 +20,14 @@ class TowerGuard(statusKeeper: ActorRef, reloadTime: FiniteDuration) extends Act
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
     val name: String = self.path.name
-    towerActor = context.actorOf(TowerActor.props(name, statusKeeper, reloadTime))
+    towerActor = context.actorOf(supervised(TowerActor.props(name, statusKeeper, reloadTime)))
   }
 
   override def receive: Receive = {
     case s: Situation =>
       towerActor forward s
       if (lostMessagesActor.isEmpty) {
-        lostMessagesActor = Some(context.actorOf(MessageLostTracker.props(s.me, statusKeeper)))
+        lostMessagesActor = Some(context.actorOf(supervised(MessageLostTracker.props(s.me, statusKeeper))))
       }
       lostMessagesActor.foreach(_ ! LastMessageId(s.index))
 
@@ -37,10 +37,19 @@ class TowerGuard(statusKeeper: ActorRef, reloadTime: FiniteDuration) extends Act
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: ReadFailureException => Restart
+      case _: ReadTimeoutException => Restart
       case _: Exception            => Restart
     }
 
+  private def supervised(props: Props) = {
+    BackoffSupervisor.props(
+      childProps   = props,
+      childName    = "backedOffActor",
+      minBackoff   = 1 second,
+      maxBackoff   = 3 minutes,
+      randomFactor = 0.4
+    )
+  }
 }
 
 object TowerGuard {
