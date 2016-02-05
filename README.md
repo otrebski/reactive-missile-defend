@@ -62,10 +62,10 @@ Cluster should have following nodes:
 
 ## Cassandra as persistence ##
 
-This project uses Cassandra 2.2 as a persistence. You can run cassandra using [Docker](https://www.docker.com/) or connect to existing Cassandra cluster. Two keyspaces will be created:
+This project uses Cassandra 2.2 as a persistence. You can run cassandra using [Docker](https://www.docker.com/) or connect to existing Cassandra cluster. Details of Cassandra docker image can be found [here](https://hub.docker.com/_/cassandra/). Two keyspaces will be created:
 * rmd_journal - for journal
 * rmd_snapshot - for snapshots
-These keyspaces can be deleted between running game.
+These keyspaces can be deleted between running game. 
 
 ### Using Cassandra from docker ###
 ```
