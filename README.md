@@ -53,7 +53,6 @@ And can be in color:
 # How cluster looks like #
 Cluster should have following nodes:
 
-* Shared journal node (Shared level DB) (sbt sj)
 * Swing UI with Game engine (sbt ui)
 * Command centers to run defence tower logic (choosing target and calculating interception vector) (sbt cc)
 * Optional CLI UI (sbt cliui)
@@ -62,10 +61,10 @@ Cluster should have following nodes:
 
 ## Cassandra as persistence ##
 
-This project uses Cassandra 2.2 as a persistence. You can run cassandra using [Docker](https://www.docker.com/) or connect to existing Cassandra cluster. Two keyspaces will be created:
+This project uses Cassandra 2.2 as a persistence. You can run cassandra using [Docker](https://www.docker.com/) or connect to existing Cassandra cluster. Details of Cassandra docker image can be found [here](https://hub.docker.com/_/cassandra/). Two keyspaces will be created:
 * rmd_journal - for journal
 * rmd_snapshot - for snapshots
-These keyspaces can be deleted between running game.
+These keyspaces can be deleted between running game. 
 
 ### Using Cassandra from docker ###
 ```
@@ -82,18 +81,14 @@ export=CASSANDRA_HOST=myIp
 ```
 
 # How to run only local nodes (using SBT): #
-First start shared journal. It will be also seed node. This node is Single Point Of Failure, so do not kill it. First export configuration:
+First start Cassandra which will be used as a persitence for Actors. You can run Cassadnra using docker or downloaded binaries.
 
-* ```export SEED_NODE=akka.tcp://defend@127.0.0.1:3000```
-* ```export HOST=127.0.0.1```
-* ```export PORT=3000```
-* ```sbt sj```
-
-Run Swing UI. This node is also game engine. Do not kill it. In another terminal run
+Run Swing UI. This node is also game engine. Do not kill it. In terminal run
 
 * ```export SEED_NODE=akka.tcp://defend@127.0.0.1:3000```
 * ```export HOST=127.0.0.1```
 * ```export PORT=2500```
+* ```export CASSANDRA_HOST=myhost```
 * ```sbt ui```
 
 Run Command Centers nodes (as many as you want). Every instance need to have different PORT
@@ -101,6 +96,7 @@ Run Command Centers nodes (as many as you want). Every instance need to have dif
 * ```export SEED_NODE=akka.tcp://defend@127.0.0.1:3000```
 * ```export HOST=127.0.0.1```
 * ```export PORT=2551```
+* ```export CASSANDRA_HOST=myhost```
 * ```sbt cc```
 
 In UI choose click "Start" to begin invasion. When attack is running you can kill or restart Command centers node and watch what will happened.
@@ -110,16 +106,16 @@ Enjoy
 # How to run using a few computers
 
 First build runnable application by ```sbt clean universal:packageBin```. Result of build will be zip file ```missiledefend-x.y.z.zip``` in ```target/universal/```
-Use ```./missiledefend-x.y.z/bin/missiledefend``` to run application (with arg ```ui``` for UI, ```sj``` for shared journal, ```cc``` for command center node.
+Use ```./missiledefend-x.y.z/bin/missiledefend``` to run application (with arg ```ui``` for UI, ```cc``` for command center node.
 You have to also export following env variables:
 
  * ```HOST``` - IP address used for communication
  * ```PORT``` - Port number
  * ```SEED_NODE``` - Akka seed node for example: ```akka.tcp://defend@192.168.0.3:3000```
+ * ```CASSANDRA_HOST``` - Contact point for Cassandra, default value is 127.0.0.1
 
 Start nodes:
 
- * ```missiledefend sj``` - shared journal (can be run with UI on the same machine)
  * ```missiledefend ui``` - UI
  * ```missiledefend cc``` - Command Center to host defence towers
  * ```missiledefend cc``` - Another Command Center on another machine
@@ -145,9 +141,10 @@ Start nodes:
 ## Persistence crash
 * Start cluster
 * Start game
-* Kill node with persistence (./missiledefend sj)
-* Kill one of "Command Center" JVM
-* Watch problems of migrating actors (Sharding depends on persistence)
+* Kill Cassandra 
+* Watch problems of Tower Actors (Sharding depends on persistence)
+* Restart Cassandra
+* Situation should go back to normal after while (if outage was short, less than ~30s)
 
 ## Drop some traffic
 * Start cluster with one Command Center node on remote machine
@@ -174,25 +171,9 @@ Start nodes:
 * Kill "Command Center" on which selected tower is running
 * Wait for towers to be migrated and node.
 * Kill cluster
-* Grep all logs with tower name. Messages to towers are indexed, so it is possible to check how many messages where lost. Logs should looks like this:
-  ```
-  Received situation 425
+* On Ui under the tower will be displayed icon ![Lost messages](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/src/main/resources/icons/mail--exclamation.png). Number under the icon shows how many messages are lost. In case the messages were delivered in wrong order, system also detect message lost.
   
-  Received situation 426
-  
-  Received situation 427
-  
-  Starting T400-214 on akka.tcp://defend@127.0.0.1:3008
-  
-  ...
-  
-  ...
-  
-  Recovery completed for T400-214 on akka.tcp://defend@127.0.0.1:3008
-  
-  Received situation XXX
-  
-  ```
+
   
   # License
    Code is available under Apache Commons 2.0 License
