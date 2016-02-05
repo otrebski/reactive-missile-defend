@@ -45,7 +45,7 @@ case class DefenceTowerStatus(
   lastMessageTimestamp: Option[Long]      = None
 )
 
-trait DefenceTowerState
+sealed trait DefenceTowerState
 
 case object DefenceTowerReady extends DefenceTowerState
 

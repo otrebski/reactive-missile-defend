@@ -2,7 +2,7 @@ package defend
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import akka.pattern.ask
-import akka.persistence.{ PersistentActor, RecoveryCompleted, SnapshotOffer }
+import akka.persistence._
 import akka.util.Timeout
 import defend.PersistenceMonitor._
 import pl.project13.scala.rainbow.Rainbow._
@@ -90,7 +90,6 @@ class TestingPersistentActor(id: String) extends PersistentActor {
     case SnapshotOffer(c, Save(s)) => status = s
     case RecoveryCompleted         =>
     case Save(s)                   => status = s
-    //      deleteMessages(toSequenceNr = Long.MaxValue)
     case a: Any                    => println(s"Recover Unknown message: $a".yellow)
   }
 
@@ -102,7 +101,9 @@ class TestingPersistentActor(id: String) extends PersistentActor {
       sender() ! Loaded(status)
     case SaveSnapshot =>
       saveSnapshot(Save(status))
-    case a: Any => println(s"Received unknown message $a".yellow)
+    case SaveSnapshotSuccess(meta)        => println(s"Successfully saved snapshot".green)
+    case SaveSnapshotFailure(meta, cause) => println(s"Failure saving snapshot $cause".red)
+    case a: Any                           => println(s"Received unknown message $a".yellow)
 
   }
 

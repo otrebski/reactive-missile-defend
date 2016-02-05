@@ -37,6 +37,8 @@ object Library {
   val levelDbjni = "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
   val leveldb = "org.iq80.leveldb"            % "leveldb"          % "0.7"
   val inmmem = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.0.3"
+  val cassandra = "com.github.krasserm" %% "akka-persistence-cassandra" % "0.6"
+  val kryo = "com.github.romix.akka" %% "akka-kryo-serialization" % "0.4.0"
 }
 
 object Dependencies {
@@ -63,7 +65,9 @@ object Dependencies {
     akkaTestkit % "test",
     scalaTest % "test",
     levelDbjni % "test",
-  leveldb % "test",
-  inmmem
+    leveldb % "test",
+    inmmem,
+    cassandra,
+    kryo
   )
 }

@@ -5,7 +5,6 @@ import java.util.Date
 
 import akka.actor.{ ActorRef, DiagnosticActorLogging, Props }
 import akka.cluster.Cluster
-import akka.cluster.sharding.ShardRegion
 import akka.event.Logging.MDC
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
@@ -17,11 +16,11 @@ import defend.ui.StatusKeeper
 import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
 import pl.project13.scala.rainbow.Rainbow._
 
+import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.Random
-import scala.collection.JavaConversions._
 
 sealed trait TowerFsmState extends FSMState
 
@@ -56,7 +55,7 @@ object FsmProtocol {
 
 }
 
-class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit val domainEventClassTag: ClassTag[FsmProtocol.DomainEvent])
+class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit val domainEventClassTag: ClassTag[FsmProtocol.DomainEvent])
     extends PersistentFSM[TowerFsmState, TowerFsMData, FsmProtocol.DomainEvent]
     with DiagnosticActorLogging {
 
@@ -64,6 +63,7 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
   val nextLevelReduction = 0.05
   val commandCenterName = Cluster(context.system).selfAddress.toString
   private val timeFormat = new SimpleDateFormat("HH:mm:ss")
+  private val created = System.currentTimeMillis()
 
   @throws[Exception](classOf[Exception]) override def preStart(): Unit = {
     log.setMDC(mdc(()))
@@ -75,14 +75,24 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
 
   override def onRecoveryCompleted(): Unit = {
     log.setMDC(mdc(()))
-    log.warning(s"Recovery completed for $persistenceId on $commandCenterName")
-    println(s"Recovery completed for $persistenceId on $commandCenterName".white.onBlue)
+    val recoveryTime: Long = System.currentTimeMillis() - created
+    log.warning(s"Recovery completed for $persistenceId on $commandCenterName in ${recoveryTime}ms")
+    println(s"Recovery completed for $persistenceId on $commandCenterName ${recoveryTime}ms".white.onBlue)
     super.preStart()
     log.clearMDC()
   }
 
+  override protected def onRecoveryFailure(cause: Throwable, event: Option[Any]): Unit = {
+    super.onRecoveryFailure(cause, event)
+    log.setMDC(mdc(()))
+    println(s"Recovery failed for $persistenceId on $commandCenterName: ${cause.getMessage}".red)
+    log.error(cause, s"Recovery failed for $persistenceId on $commandCenterName on event $event")
+    log.clearMDC()
+  }
+
   def persistenceId: String = {
-    self.path.name
+    name
+    //    self.path.parent.name
   }
 
   override def applyEvent(domainEvent: DomainEvent, currentData: TowerFsMData): TowerFsMData = domainEvent match {
@@ -202,24 +212,14 @@ class TowerActor(statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit va
     super.postStop()
     log.clearMDC()
   }
+
 }
 
 object TowerActor {
 
-  val shardRegion = "tower"
-  val extractEntityId: ShardRegion.ExtractEntityId = {
-    case Envelope(id, payload) ⇒ (id.toString, payload)
-  }
-
-  val numberOfShards = 100
-
-  val extractShardId: ShardRegion.ExtractShardId = {
-    case Envelope(id, _) ⇒ (id.hashCode % numberOfShards).toString
-  }
-
   import scala.concurrent.duration._
 
-  def props(statusKeeper: ActorRef, reloadTime: FiniteDuration = 2 seconds): Props = Props(new TowerActor(statusKeeper, reloadTime))
+  def props(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuration = 2 seconds): Props = Props(new TowerActor(name, statusKeeper, reloadTime))
 
   object Protocol {
 

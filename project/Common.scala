@@ -18,7 +18,9 @@ object Common {
         "patriknw at bintray" at "http://dl.bintray.com/patriknw/maven",
         "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven",
         "Sonatype OSS Releases" at "http://oss.sonatype.org/content/repositories/releases/",
-        "Otros at bintrat" at "https://bintray.com/artifact/download/otros-systems/maven"),
+        "Otros at bintrat" at "https://bintray.com/artifact/download/otros-systems/maven",
+        "krasserm at bintray/cassandra" at "http://dl.bintray.com/krasserm/maven"
+),
       scalacOptions ++= List(
         "-unchecked",
         "-deprecation",

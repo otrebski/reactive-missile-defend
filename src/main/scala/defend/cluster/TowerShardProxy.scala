@@ -2,7 +2,7 @@ package defend.cluster
 
 import akka.actor.{ ActorRef, ActorSystem }
 import akka.cluster.sharding.ClusterSharding
-import defend.shard.TowerActor
+import defend.shard.TowerGuard
 
 trait TowerShardProxy {
 
@@ -11,10 +11,10 @@ trait TowerShardProxy {
 
   val towerShardProxy: ActorRef = {
     ClusterSharding(system).startProxy(
-      typeName        = TowerActor.shardRegion,
+      typeName        = TowerGuard.shardRegion,
       role            = Some(Roles.Tower),
-      extractEntityId = TowerActor.extractEntityId,
-      extractShardId  = TowerActor.extractShardId
+      extractEntityId = TowerGuard.extractEntityId,
+      extractShardId  = TowerGuard.extractShardId
     )
   }
 
