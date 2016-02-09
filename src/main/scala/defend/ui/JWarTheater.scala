@@ -45,6 +45,7 @@ class JWarTheater(
   minimumSize = preferredSize
 
   private val debugFont: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
+  private val towerDetailsFont: swing.Font = new swing.Font("Courier", Font.BOLD, 14)
   private val towerInfoFont: swing.Font = new swing.Font("Courier", Font.BOLD, 13)
   private val offlineTowerFont: swing.Font = new swing.Font("Arial", Font.BOLD, 14)
   private val offlineStatusKeeperFont: swing.Font = new swing.Font("Arial", Font.BOLD, 32)
@@ -155,7 +156,7 @@ class JWarTheater(
     if (showGrid) {
       paintGrid(g, landScape)
     }
-    paintSelectedDefence(g, warTheater.landScape, warTheater.defence, warTheater.lostMessages)
+    paintSelectedDefence(g, warTheater.landScape, warTheater.defence, warTheater.lostMessages, warTheater.recoveryTime)
     if (paintDebug) {
       paintDebug(g, paintingStart, timeProvider() - warTheater.timestamp)
     }
@@ -346,7 +347,7 @@ class JWarTheater(
     new swing.Color(255, d, d)
   }
 
-  def paintSelectedDefence(g: Graphics2D, landScape: LandScape, defence: List[DefenceTowerStatus], lostMessages: List[LostMessages]) = {
+  def paintSelectedDefence(g: Graphics2D, landScape: LandScape, defence: List[DefenceTowerStatus], lostMessages: List[LostMessages], recoveryTime: Map[String, Long]) = {
     selectedTower.flatMap(t => defence.find(_.defenceTower.position == t.defenceTower.position)).foreach {
       t =>
         val lostMessagesCount = lostMessages.filter(_.tower == t.defenceTower).map(_.lostMessages).sum
@@ -367,8 +368,9 @@ class JWarTheater(
               |Level: ${t.level}
               |Range: $range
               |Angle error: $degrees%2.1f°
+              |Recovery time: ${recoveryTime.get(t.defenceTower.name).map(s => s"${s}ms").getOrElse("Unknown")}
               |Lost messages: $lostMessagesCount""".stripMargin
-        g.setFont(debugFont)
+        g.setFont(towerDetailsFont)
         val metrics: FontMetrics = g.getFontMetrics
         val height = metrics.getHeight
         import scala.math._

@@ -80,6 +80,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
     println(s"Recovery completed for $persistenceId on $commandCenterName ${recoveryTime}ms".white.onBlue)
     super.preStart()
     log.clearMDC()
+    statusKeeper ! StatusKeeper.Protocol.RecoveryReport(persistenceId, recoveryTime, success = true)
   }
 
   override protected def onRecoveryFailure(cause: Throwable, event: Option[Any]): Unit = {
@@ -88,6 +89,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
     println(s"Recovery failed for $persistenceId on $commandCenterName: ${cause.getMessage}".red)
     log.error(cause, s"Recovery failed for $persistenceId on $commandCenterName on event $event")
     log.clearMDC()
+    statusKeeper ! StatusKeeper.Protocol.RecoveryReport(persistenceId, System.currentTimeMillis() - created, success = false)
   }
 
   def persistenceId: String = {

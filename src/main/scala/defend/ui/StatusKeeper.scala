@@ -31,6 +31,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
   private var landscape: Option[LandScape] = None
   private var persistenceState: PersistenceState = PersistenceUnknown()
   private var lostMessages: List[LostMessages] = List.empty[LostMessages]
+  private var recoveryTime: Map[String, Long] = Map.empty[String, Long]
 
   override def mdc(currentMessage: Any): MDC = {
     Map("node" -> Cluster(context.system).selfAddress.toString)
@@ -101,6 +102,9 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       println(s"Tower ${tower.name} has lost $count messages at $timestamp".red)
       //hack for using with Raspberry PI without time synchronization
       lostMessages = lm.copy(timestamp = timeProvider()) :: lostMessages
+
+    case rr: RecoveryReport =>
+      recoveryTime = recoveryTime.updated(rr.name, rr.duration)
   }
 
   def sendStatus(): Unit = {
@@ -143,7 +147,8 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       points           = points,
       clusterLeader    = Cluster(context.system).state.leader.map(_.toString),
       persistenceState = effectivePersistenceState,
-      lostMessages     = lostMessages
+      lostMessages     = lostMessages,
+      recoveryTime     = recoveryTime
     )
     sender ! warTheater
   }
@@ -183,6 +188,8 @@ object StatusKeeper {
     case class TowerKeepAlive(id: String, commandCenterName: String, towerState: DefenceTowerState, level: Int)
 
     case class LostMessages(tower: DefenceTower, lostMessages: Int, timestamp: Long)
+
+    case class RecoveryReport(name: String, duration: Long, success: Boolean)
   }
 
 }
