@@ -91,7 +91,8 @@ case class WarTheater(
   clusterLeader:    Option[String]                    = None,
   persistenceState: PersistenceState                  = PersistenceUnknown(),
   lostMessages:     List[LostMessages]                = List.empty[LostMessages],
-  recoveryTime:     Map[String, Long]                 = Map.empty[String, Long]
+  recoveryTime:     Map[String, Long]                 = Map.empty[String, Long],
+  statusKeeper:     Option[String]                    = None
 
 )
 

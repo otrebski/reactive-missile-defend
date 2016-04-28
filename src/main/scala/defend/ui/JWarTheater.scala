@@ -66,6 +66,7 @@ class JWarTheater(
   private val okIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tick-octagon-frame.png"))
   private val errorIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/cross-octagon-frame.png"))
   private val unknownIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/question-octagon-frame.png"))
+  private val eye: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/eye.png"))
 
   private val lostMessageIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/mail--exclamation.png"))
 
@@ -150,7 +151,7 @@ class JWarTheater(
     paintAlienWeapon(g, landScape, warTheater.alienWeapons)
     paintHumanWeapon(g, warTheater.humanWeapons, landScape)
     paintCommandCentres(g, warTheater.commandCentres, warTheater.defence, warTheater.clusterLeader, landScape)
-    paintPersistenceState(g, warTheater.persistenceState, landScape)
+    paintPersistenceStateAndStatusKeeper(g, warTheater.persistenceState, warTheater.statusKeeper, landScape)
     paintPoints(g, warTheater.points, landScape)
     paintGameOver(g, warTheater.city, landScape)
     if (showGrid) {
@@ -528,7 +529,7 @@ class JWarTheater(
     d.drawString(s, rect.x + (rect.width - metrics.stringWidth(s)) / 2, rect.y + (rect.height + metrics.getHeight) / 2)
   }
 
-  def paintPersistenceState(g: Graphics2D, persistenceState: PersistenceState, scape: LandScape) = {
+  def paintPersistenceStateAndStatusKeeper(g: Graphics2D, persistenceState: PersistenceState, statusKeeperNode: Option[String], scape: LandScape) = {
     val font: swing.Font = new swing.Font("Courier", Font.PLAIN, 12)
     val xPos: Int = 10
     val yPos: Int = scape.groundLevel - 120
@@ -538,7 +539,7 @@ class JWarTheater(
       case p: PersistenceError => (Color.RED, errorIcon)
       case _                   => (Color.WHITE, unknownIcon)
     }
-    val s = s"  Persistence: "
+    val s = "  Persistence: "
     val metrics: FontMetrics = g.getFontMetrics(font)
     val fontHeight: Int = metrics.getHeight
     val rect: Rect = Rect(xPos, scape.height - yPos, metrics.stringWidth(s) + icon.getWidth + 10, height)
@@ -549,6 +550,17 @@ class JWarTheater(
     g.setColor(color)
     g.drawString(s, rect.x, rect.y + (rect.height + fontHeight) / 2)
     g.drawImage(icon, rect.x + metrics.stringWidth(s), rect.y + (rect.height - icon.getHeight) / 2, null)
+
+    val sk = clusterAddressToHostPort(statusKeeperNode.getOrElse("?"))
+    val rect2 = Rect(rect.x + rect.width, scape.height - yPos, metrics.stringWidth(sk) + 2 * eye.getWidth + 15, height)
+    g.setColor(Color.BLACK)
+    g.fillRect(rect2.x, rect2.y, rect2.width, rect2.height)
+    g.setColor(Color.WHITE)
+    g.drawRect(rect2.x, rect2.y, rect2.width, rect2.height)
+    g.setColor(color)
+    g.drawImage(eye, rect2.x + 5, rect.y + (rect2.height - eye.getHeight) / 2, null)
+    g.drawImage(eye, rect2.x + 5 + eye.getWidth, rect.y + (rect2.height - eye.getHeight) / 2, null)
+    g.drawString(sk, rect2.x + 10 + 2 * eye.getWidth, rect.y + (rect2.height + fontHeight) / 2)
   }
 
   def paintCities(d: Graphics2D, cities: List[City], landScape: LandScape): Unit = {

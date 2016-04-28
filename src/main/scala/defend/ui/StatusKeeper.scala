@@ -108,7 +108,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
   }
 
   def sendStatus(): Unit = {
-
+    val statusKeeprNode: String = Cluster(system = context.system).selfAddress.toString
     previousExplosions = previousExplosions.filter(explosionFilter)
     lostMessages = lostMessages.filter(lostMessagesFilter)
 
@@ -148,7 +148,8 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       clusterLeader    = Cluster(context.system).state.leader.map(_.toString),
       persistenceState = effectivePersistenceState,
       lostMessages     = lostMessages,
-      recoveryTime     = recoveryTime
+      recoveryTime     = recoveryTime,
+      statusKeeper     = Some(statusKeeprNode)
     )
     sender ! warTheater
   }
