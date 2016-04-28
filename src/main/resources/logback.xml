@@ -9,13 +9,6 @@
         </encoder>
     </appender>
 
-
-    <appender name="SOCKET" class="pl.otros.logback.socket.OtrosSocketAppender">
-        <remoteHost>localhost</remoteHost>
-        <port>5000</port>
-        <includeCallerData>true</includeCallerData>
-    </appender>
-
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>rmd-${PORT}.log</file>
         <append>false</append>
@@ -29,7 +22,6 @@
 
     <root level="debug">
         <appender-ref ref="console"/>
-        <appender-ref ref="SOCKET"/>
         <appender-ref ref="FILE_ASYNC"/>
     </root>
 

@@ -2,10 +2,10 @@ import sbt._
 
 object Version {
 
-  val akka = "2.4.1"
+  val akka = "2.4.4"
   val akkaDataReplication = "0.6"
   val logback = "1.1.3"
-  val scala = "2.11.7"
+  val scala = "2.11.8"
   val scalaParsers = "1.0.2"
   val scalaTest = "2.2.2"
   val swing = "1.0.0"
@@ -37,8 +37,8 @@ object Library {
   val levelDbjni = "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
   val leveldb = "org.iq80.leveldb"            % "leveldb"          % "0.7"
   val inmmem = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.0.3"
-  val cassandra = "com.github.krasserm" %% "akka-persistence-cassandra" % "0.6"
-  val kryo = "com.github.romix.akka" %% "akka-kryo-serialization" % "0.4.0"
+  val cassandra =  "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.13"
+  val kryo = "com.github.romix.akka" %% "akka-kryo-serialization" % "0.4.1"
 }
 
 object Dependencies {
