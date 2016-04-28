@@ -61,7 +61,7 @@ class GameEngine(
       waveGeneratorActor ! EnemyGenerator.PingForEnemies(defence, city, alienWeaponsInAction, humanWeaponInAction, landScape)
       val now = System.currentTimeMillis()
       val timeDiff: Long = now - lastTimestamp
-      log.debug(s"Processing tick, time diff=$timeDiff")
+      log.debug("Processing tick, time diff={}", timeDiff)
       alienWeaponsInAction = alienWeaponsInAction ::: waves.flatMap(w => w.weaponsInAction)
       waves = List.empty[Wave]
       humanWeaponInAction = humanWeaponInAction ::: rocketsFired.map(rf => WeaponInAction(rf.humanWeapon, rf.defenceTower.position, rf.moveVector, rf.explodingVelocity))
@@ -127,7 +127,7 @@ class GameEngine(
 
       index = index + 1
       defence.foreach { t =>
-        log.debug(s"Notify tower $t")
+        log.debug("Notify tower {}", t)
         val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(index, t, alienWeaponsInAction, landScape))
         towerShard ! envelope
       }
