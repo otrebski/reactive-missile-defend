@@ -34,7 +34,7 @@ object Library {
   val configFicus = "net.ceedubs" %% "ficus" % "1.1.2"
   val levelDbjni = "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
   val leveldb = "org.iq80.leveldb"            % "leveldb"          % "0.7"
-  val inmmem = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.0.3"
+  val inmmem = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.2.13"
   val cassandra =  "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.13"
   val kryo = "com.github.romix.akka" %% "akka-kryo-serialization" % "0.4.1"
 }
