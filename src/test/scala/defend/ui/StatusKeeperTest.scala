@@ -156,11 +156,8 @@ class StatusKeeperTest extends TestKit(ActorSystem("defend", ConfigFactory.load(
 
   override protected def afterAll(): Unit = {
     super.afterAll()
-    println("Shutting down actor system after")
     val terminate: Future[Terminated] = system.terminate()
     implicit val ec = scala.concurrent.ExecutionContext.global
-    println("Waiting for actor system to close")
     Await.result(terminate, 10 seconds)
-    println("Actor system closed")
   }
 }

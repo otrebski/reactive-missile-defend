@@ -30,7 +30,7 @@ object Library {
   val scalaTest = "org.scalatest" %% "scalatest" % Version.scalaTest
   val scalaRainbow = "pl.project13.scala" %% "rainbow" % "0.2"
   val configFicus = "net.ceedubs" %% "ficus" % "1.1.2"
-  val levelDbjni = "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
+//  val levelDbjni = "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
   val leveldb = "org.iq80.leveldb"            % "leveldb"          % "0.7"
   val inmmem = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.2.13"
   val cassandra =  "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.13"
@@ -52,12 +52,11 @@ object Dependencies {
     akkaSlf4j,
     logbackClassic,
     scalaParsers,
-//    h2database,
     scalaRainbow,
     configFicus,
     akkaTestkit % "test",
     scalaTest % "test",
-    levelDbjni % "test",
+//    levelDbjni % "test",
     leveldb ,
     inmmem,
     cassandra,
