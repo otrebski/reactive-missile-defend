@@ -107,7 +107,6 @@ object UiApp extends SimpleSwingApplication
     private var isOver: Boolean = true
 
     val delaySlider = new scala.swing.Slider() {
-      title = "Delay time [ms]"
       orientation = Orientation.Horizontal
       max = 100
       min = 10

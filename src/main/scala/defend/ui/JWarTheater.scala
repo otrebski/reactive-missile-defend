@@ -557,7 +557,7 @@ class JWarTheater(
     g.fillRect(rect2.x, rect2.y, rect2.width, rect2.height)
     g.setColor(Color.WHITE)
     g.drawRect(rect2.x, rect2.y, rect2.width, rect2.height)
-    g.setColor(color)
+    g.setColor(Color.GREEN)
     g.drawImage(eye, rect2.x + 5, rect.y + (rect2.height - eye.getHeight) / 2, null)
     g.drawImage(eye, rect2.x + 5 + eye.getWidth, rect.y + (rect2.height - eye.getHeight) / 2, null)
     g.drawString(sk, rect2.x + 10 + 2 * eye.getWidth, rect.y + (rect2.height + fontHeight) / 2)
