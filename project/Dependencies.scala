@@ -28,8 +28,6 @@ object Library {
 
   val scalaParsers = "org.scala-lang.modules" %% "scala-parser-combinators" % Version.scalaParsers
   val scalaTest = "org.scalatest" %% "scalatest" % Version.scalaTest
-//  val persitanceJdbc = "com.github.dnvriend" %% "akka-persistence-jdbc" % "1.1.5"
-//  val h2database = "com.h2database" % "h2" % "1.4.187"
   val scalaRainbow = "pl.project13.scala" %% "rainbow" % "0.2"
   val configFicus = "net.ceedubs" %% "ficus" % "1.1.2"
   val levelDbjni = "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
