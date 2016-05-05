@@ -17,7 +17,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.implicitConversions
 import scala.swing._
-import scala.swing.event.ButtonClicked
+import scala.swing.event.{ ButtonClicked, ValueChanged }
 
 object UiApp extends SimpleSwingApplication
     with SharedLevelDb
@@ -107,13 +107,13 @@ object UiApp extends SimpleSwingApplication
     private var isOver: Boolean = true
 
     val delaySlider = new scala.swing.Slider() {
-      title = "Delay time"
+      title = "Delay time [ms]"
       orientation = Orientation.Horizontal
-      max = 500
-      min = 50
-      minorTickSpacing = 10
-      majorTickSpacing = 50
-      paintTicks = true
+      max = 100
+      min = 10
+      //      minorTickSpacing = 10
+      majorTickSpacing = 10
+      //      paintTicks = true
       paintTrack = true
       paintLabels = true
       snapToTicks = true
@@ -123,6 +123,7 @@ object UiApp extends SimpleSwingApplication
     listenTo(buttonStart)
     listenTo(showGrid)
     listenTo(showTracks)
+    listenTo(delaySlider)
 
     val f: () => Unit = { () => Swing.onEDT(gameFinished()) }
 
@@ -164,6 +165,9 @@ object UiApp extends SimpleSwingApplication
 
       case bc: ButtonClicked if bc.source == showGrid   => jWarTheater.showGrid = showGrid.selected
       case bc: ButtonClicked if bc.source == showTracks => jWarTheater.showTracks = showTracks.selected
+      case vc: ValueChanged if vc.source == delaySlider =>
+        val duration: FiniteDuration = FiniteDuration(delaySlider.value.toLong, scala.concurrent.duration.MILLISECONDS)
+        gameEngine.foreach(_ ! GameEngine.Protocol.UpdateDelayTime(duration))
     }
 
     val toolbar1 = new BoxPanel(Orientation.Horizontal) {

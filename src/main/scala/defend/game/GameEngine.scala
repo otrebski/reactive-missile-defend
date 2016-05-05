@@ -2,13 +2,13 @@ package defend.game
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.cluster.sharding.{ ShardRegion, ClusterSharding }
+import akka.cluster.sharding.{ ClusterSharding, ShardRegion }
 import akka.event.Logging.MDC
 import defend._
-import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick }
+import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick, UpdateDelayTime }
 import defend.model._
-import defend.shard.{ TowerGuard, TowerActor }
 import defend.shard.TowerActor.Protocol.MessageOfDeath
+import defend.shard.{ TowerActor, TowerGuard }
 
 import scala.concurrent.duration._
 import scala.language.{ implicitConversions, postfixOps }
@@ -20,7 +20,7 @@ class GameEngine(
   waveGenerator:    WaveGenerator,
   statusKeeper:     ActorRef,
   gameOverCallback: Option[() => Unit],
-  delayTime:        FiniteDuration
+  var delayTime:    FiniteDuration
 )
     extends Actor
     with DiagnosticActorLogging {
@@ -164,6 +164,7 @@ class GameEngine(
         defence.foreach(t => towerShard ! Envelope(t.name, ShardRegion.Passivate(PoisonPill)))
         gameOverCallback.foreach(_.apply())
       }
+    case UpdateDelayTime(delay) => delayTime = delay
   }
 
   implicit def weaponInActionToExplosion(weaponInAction: WeaponInAction[Weapon]): Explosion = {
@@ -198,6 +199,8 @@ object GameEngine {
   case object Protocol {
 
     case object Tick
+
+    case class UpdateDelayTime(delay: FiniteDuration)
 
     case class RocketFired(humanWeapon: HumanWeapon, moveVector: MoveVector, defenceTower: DefenceTower, explodingVelocity: Option[Double])
 
