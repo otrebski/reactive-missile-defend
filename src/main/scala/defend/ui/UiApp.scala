@@ -105,6 +105,15 @@ object UiApp extends SimpleSwingApplication
     private val statusLabel: Label = new Label("")
     private var isOver: Boolean = true
 
+    val delaySlider = new scala.swing.Slider(){
+      title = "Delay time"
+      orientation = Orientation.Horizontal
+      max = 250
+      min = 50
+      minorTickSpacing = 10
+      majorTickSpacing = 50
+    }
+
     listenTo(buttonStart)
     listenTo(showGrid)
     listenTo(showTracks)
@@ -142,7 +151,7 @@ object UiApp extends SimpleSwingApplication
           case "Text wave"        => new AdWaveGenerator()
           case _                  => new TestWaveGenerator(quietPeriod = 5000)
         }
-
+        val delayTime: Int = delaySlider.value
         gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f))))
         isOver = false
 
@@ -174,7 +183,20 @@ object UiApp extends SimpleSwingApplication
       add(jWarTheater, BorderPanel.Position.Center)
       add(toolbarSouth, BorderPanel.Position.South)
     }
-    contents = bp
+
+
+
+    private val settingsPanel = new BoxPanel(Orientation.Vertical) {
+      contents += delaySlider
+    }
+
+
+    val tb = new TabbedPane {
+      pages += new TabbedPane.Page("Game", bp)
+      pages += new TabbedPane.Page("Settings", settingsPanel)
+    }
+
+    contents = tb
 
     override def closeOperation() = {
       system.terminate()

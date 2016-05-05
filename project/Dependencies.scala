@@ -51,6 +51,7 @@ object Dependencies {
     akkaPersistence,
     scalaSwing,
     scalaLogging,
+    akkaSlf4j,
     logbackClassic,
     scalaParsers,
 //    h2database,
@@ -59,7 +60,7 @@ object Dependencies {
     akkaTestkit % "test",
     scalaTest % "test",
     levelDbjni % "test",
-    leveldb % "test",
+    leveldb ,
     inmmem,
     cassandra,
     kryo

@@ -19,7 +19,8 @@ class GameEngine(
   landScape:        LandScape,
   waveGenerator:    WaveGenerator,
   statusKeeper:     ActorRef,
-  gameOverCallback: Option[() => Unit]
+  gameOverCallback: Option[() => Unit],
+  delayTime: FiniteDuration
 )
     extends Actor
     with DiagnosticActorLogging {
@@ -38,6 +39,7 @@ class GameEngine(
   private val towerPings: List[Cancellable] = defence.map(d => context.system.scheduler.schedule(10 millis, 100 millis, towerShard, Envelope(d.name, TowerActor.Protocol.Ping)))
   private val selfAddress: Address = Cluster(context.system).selfAddress
   private var index = 0
+
 
   override def mdc(currentMessage: Any): MDC = {
     Map("node" -> selfAddress)
@@ -158,7 +160,7 @@ class GameEngine(
       val sum: Int = city.map(_.condition).sum
       if (sum > 0) {
         implicit val ec = context.system.dispatcher
-        context.system.scheduler.scheduleOnce(50 millis, self, Tick)
+        context.system.scheduler.scheduleOnce(delayTime, self, Tick)
       } else {
         defence.foreach(t => towerShard ! Envelope(t.name, ShardRegion.Passivate(PoisonPill)))
         gameOverCallback.foreach(_.apply())
@@ -188,9 +190,10 @@ object GameEngine {
     landScape:        LandScape,
     waveGenerator:    WaveGenerator,
     statusKeeper:     ActorRef,
-    gameOverCallback: Option[() => Unit]
+    gameOverCallback: Option[() => Unit],
+    delayTime: FiniteDuration = 50 millis
   ) = {
-    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback)
+    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback, delayTime)
   }
 
   case object Protocol {
