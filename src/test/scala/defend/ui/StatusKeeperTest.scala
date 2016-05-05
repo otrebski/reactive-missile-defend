@@ -1,11 +1,12 @@
 package defend.ui
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ ActorRef, ActorSystem, Terminated }
 import akka.testkit.{ TestKit, TestProbe }
 import com.typesafe.config.ConfigFactory
 import defend.model._
 import org.scalatest._
 
+import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -63,7 +64,11 @@ class StatusKeeperTest extends TestKit(ActorSystem("defend", ConfigFactory.load(
     underTest.tell(StatusKeeper.Protocol.UpdateRequest, probe.ref)
 
     probe.expectMsgPF(1 second) {
-      case s: WarTheater => s shouldBe emptyWarTheater.copy(timestamp = s.timestamp, clusterLeader = Some("akka.tcp://defend@localhost:12500"))
+      case s: WarTheater => s shouldBe emptyWarTheater.copy(
+        timestamp     = s.timestamp,
+        clusterLeader = Some("akka.tcp://defend@localhost:12500"),
+        statusKeeper  = s.statusKeeper
+      )
     }
   }
 
@@ -151,7 +156,11 @@ class StatusKeeperTest extends TestKit(ActorSystem("defend", ConfigFactory.load(
 
   override protected def afterAll(): Unit = {
     super.afterAll()
-    println("Shuting down actor system after")
-    system.terminate()
+    println("Shutting down actor system after")
+    val terminate: Future[Terminated] = system.terminate()
+    implicit val ec = scala.concurrent.ExecutionContext.global
+    println("Waiting for actor system to close")
+    Await.result(terminate, 10 seconds)
+    println("Actor system closed")
   }
 }

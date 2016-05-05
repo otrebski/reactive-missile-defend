@@ -18,12 +18,12 @@ class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("a
   private val situation: Situation = Situation(0, tower, Nil, LandScape(200, 100, 50))
   private val situationWithIncoming: Situation = Situation(1, tower, List(WeaponInAction(AlienBomb(1, 1), Position(10, 100), MoveVector(0, 0))), LandScape(200, 100, 50))
 
-  "TowerFsmActor" should {
+  "TowerActor" should {
 
     "start with ready" in {
 
       val statusKeeper: TestProbe = new TestProbe(system)
-      val props: Props = TowerActor.props(statusKeeper.ref, 100 millis)
+      val props: Props = TowerActor.props("name", statusKeeper.ref, 100 millis)
 
       val underTest = system.actorOf(props)
       underTest ! Ping
@@ -42,7 +42,7 @@ class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("a
     "go to reloading after shooting and back to ready" in {
       val statusKeeper: TestProbe = new TestProbe(system)
       val situationSender: TestProbe = new TestProbe(system)
-      val props: Props = TowerActor.props(statusKeeper.ref, reloadTime = 150 millis)
+      val props: Props = TowerActor.props("name", statusKeeper.ref, reloadTime = 150 millis)
 
       val underTest = system.actorOf(props)
 
@@ -79,7 +79,7 @@ class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("a
 
     "accumulate experience" in {
       val statusKeeper: TestProbe = new TestProbe(system)
-      val props: Props = TowerActor.props(statusKeeper.ref)
+      val props: Props = TowerActor.props("name", statusKeeper.ref)
 
       val underTest = system.actorOf(props)
       underTest ! situation
