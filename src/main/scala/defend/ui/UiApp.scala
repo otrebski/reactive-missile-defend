@@ -2,6 +2,7 @@ package defend.ui
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import javax.swing.BorderFactory
 
 import akka.actor._
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -12,8 +13,8 @@ import defend.model._
 import defend.ui.JWarTheater.CommandCenterPopupAction
 import net.ceedubs.ficus.Ficus._
 
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.implicitConversions
 import scala.swing._
 import scala.swing.event.ButtonClicked
@@ -105,13 +106,18 @@ object UiApp extends SimpleSwingApplication
     private val statusLabel: Label = new Label("")
     private var isOver: Boolean = true
 
-    val delaySlider = new scala.swing.Slider(){
+    val delaySlider = new scala.swing.Slider() {
       title = "Delay time"
       orientation = Orientation.Horizontal
-      max = 250
+      max = 500
       min = 50
       minorTickSpacing = 10
       majorTickSpacing = 50
+      paintTicks = true
+      paintTrack = true
+      paintLabels = true
+      snapToTicks = true
+      border = BorderFactory.createTitledBorder("Sleep time [ms]")
     }
 
     listenTo(buttonStart)
@@ -151,8 +157,9 @@ object UiApp extends SimpleSwingApplication
           case "Text wave"        => new AdWaveGenerator()
           case _                  => new TestWaveGenerator(quietPeriod = 5000)
         }
-        val delayTime: Int = delaySlider.value
-        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f))))
+        import scala.concurrent.duration._
+        val delayDuration: FiniteDuration = FiniteDuration(delaySlider.value.toLong, scala.concurrent.duration.MILLISECONDS)
+        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f), delayDuration)))
         isOver = false
 
       case bc: ButtonClicked if bc.source == showGrid   => jWarTheater.showGrid = showGrid.selected
@@ -184,12 +191,9 @@ object UiApp extends SimpleSwingApplication
       add(toolbarSouth, BorderPanel.Position.South)
     }
 
-
-
     private val settingsPanel = new BoxPanel(Orientation.Vertical) {
       contents += delaySlider
     }
-
 
     val tb = new TabbedPane {
       pages += new TabbedPane.Page("Game", bp)
@@ -228,6 +232,8 @@ object UiApp extends SimpleSwingApplication
       logger.info("Closing UIApp window")
       super.close()
     }
+
+    size = new Dimension(800, 600)
   }
 
   def generateCityAndDefence(width: Int, height: Int, distance: Int, towersPerCity: Int, towerNamePrefix: String): (List[City], List[DefenceTower]) = {

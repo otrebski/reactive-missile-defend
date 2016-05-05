@@ -20,7 +20,7 @@ class GameEngine(
   waveGenerator:    WaveGenerator,
   statusKeeper:     ActorRef,
   gameOverCallback: Option[() => Unit],
-  delayTime: FiniteDuration
+  delayTime:        FiniteDuration
 )
     extends Actor
     with DiagnosticActorLogging {
@@ -39,7 +39,6 @@ class GameEngine(
   private val towerPings: List[Cancellable] = defence.map(d => context.system.scheduler.schedule(10 millis, 100 millis, towerShard, Envelope(d.name, TowerActor.Protocol.Ping)))
   private val selfAddress: Address = Cluster(context.system).selfAddress
   private var index = 0
-
 
   override def mdc(currentMessage: Any): MDC = {
     Map("node" -> selfAddress)
@@ -191,7 +190,7 @@ object GameEngine {
     waveGenerator:    WaveGenerator,
     statusKeeper:     ActorRef,
     gameOverCallback: Option[() => Unit],
-    delayTime: FiniteDuration = 50 millis
+    delayTime:        FiniteDuration     = 50 millis
   ) = {
     Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback, delayTime)
   }
