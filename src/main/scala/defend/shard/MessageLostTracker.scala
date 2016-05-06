@@ -12,6 +12,7 @@ class MessageLostTracker(tower: DefenceTower, statusKeeper: ActorRef) extends Pe
   def persistenceId: String = s"messageLostTracker-${tower.name}"
 
   private var lastMessageId = 0
+  val snapshotEvery: Int = 100
   private val created = System.currentTimeMillis()
 
   override def receiveRecover: Receive = {
@@ -20,16 +21,18 @@ class MessageLostTracker(tower: DefenceTower, statusKeeper: ActorRef) extends Pe
       lastMessageId = id
     case RecoveryCompleted =>
       println(s"Recover completed for $persistenceId in ${System.currentTimeMillis() - created}ms".green)
-      log.info(s"Recover completed for $persistenceId in ${System.currentTimeMillis() - created}ms")
-    case RecoveryFailure(cause) =>
-      println(s"Recovery for $persistenceId failed: ${cause.getMessage}".red)
-      log.error(cause, "Recovery failed!")
+      log.info("Recover completed for {} in {}ms", persistenceId, System.currentTimeMillis() - created)
+  }
 
+  override protected def onRecoveryFailure(cause: Throwable, event: Option[Any]): Unit = {
+    super.onRecoveryFailure(cause, event)
+    println(s"Recovery for $persistenceId failed: ${cause.getMessage}".red)
+    log.error(cause, "Recovery failed!")
   }
 
   override def receiveCommand: Receive = {
     case m @ LastMessageId(id) =>
-      log.debug(s"received LastMessage($id)")
+      log.debug("received LastMessage({})", id)
       persist(m) {
         x =>
           if (id - lastMessageId > 1) {
@@ -37,12 +40,13 @@ class MessageLostTracker(tower: DefenceTower, statusKeeper: ActorRef) extends Pe
           }
           lastMessageId = id
       }
-      if (id % 30 == 0) {
+      if (lastMessageId % snapshotEvery == 0) {
         log.debug("Saving snapshot")
         saveSnapshot(m)
       }
     case SaveSnapshotSuccess(metadata) =>
       log.info("Snapshot save successfully")
+      deleteMessages(metadata.sequenceNr - 1)
 
     case SaveSnapshotFailure(metadata, cause) =>
       log.error(cause, s"Snapshot not saved: ${cause.getMessage}")

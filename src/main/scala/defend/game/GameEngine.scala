@@ -2,13 +2,13 @@ package defend.game
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.cluster.sharding.{ ShardRegion, ClusterSharding }
+import akka.cluster.sharding.{ ClusterSharding, ShardRegion }
 import akka.event.Logging.MDC
 import defend._
-import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick }
+import defend.game.GameEngine.Protocol.{ AlienRocketFired, RocketFired, Tick, UpdateDelayTime }
 import defend.model._
-import defend.shard.{ TowerGuard, TowerActor }
 import defend.shard.TowerActor.Protocol.MessageOfDeath
+import defend.shard.{ TowerActor, TowerGuard }
 
 import scala.concurrent.duration._
 import scala.language.{ implicitConversions, postfixOps }
@@ -19,7 +19,8 @@ class GameEngine(
   landScape:        LandScape,
   waveGenerator:    WaveGenerator,
   statusKeeper:     ActorRef,
-  gameOverCallback: Option[() => Unit]
+  gameOverCallback: Option[() => Unit],
+  var delayTime:    FiniteDuration
 )
     extends Actor
     with DiagnosticActorLogging {
@@ -61,7 +62,7 @@ class GameEngine(
       waveGeneratorActor ! EnemyGenerator.PingForEnemies(defence, city, alienWeaponsInAction, humanWeaponInAction, landScape)
       val now = System.currentTimeMillis()
       val timeDiff: Long = now - lastTimestamp
-      log.debug(s"Processing tick, time diff=$timeDiff")
+      log.debug("Processing tick, time diff={}", timeDiff)
       alienWeaponsInAction = alienWeaponsInAction ::: waves.flatMap(w => w.weaponsInAction)
       waves = List.empty[Wave]
       humanWeaponInAction = humanWeaponInAction ::: rocketsFired.map(rf => WeaponInAction(rf.humanWeapon, rf.defenceTower.position, rf.moveVector, rf.explodingVelocity))
@@ -127,7 +128,7 @@ class GameEngine(
 
       index = index + 1
       defence.foreach { t =>
-        log.debug(s"Notify tower $t")
+        log.debug("Notify tower {}", t)
         val envelope: Envelope = Envelope(t.name, TowerActor.Protocol.Situation(index, t, alienWeaponsInAction, landScape))
         towerShard ! envelope
       }
@@ -158,11 +159,12 @@ class GameEngine(
       val sum: Int = city.map(_.condition).sum
       if (sum > 0) {
         implicit val ec = context.system.dispatcher
-        context.system.scheduler.scheduleOnce(50 millis, self, Tick)
+        context.system.scheduler.scheduleOnce(delayTime, self, Tick)
       } else {
         defence.foreach(t => towerShard ! Envelope(t.name, ShardRegion.Passivate(PoisonPill)))
         gameOverCallback.foreach(_.apply())
       }
+    case UpdateDelayTime(delay) => delayTime = delay
   }
 
   implicit def weaponInActionToExplosion(weaponInAction: WeaponInAction[Weapon]): Explosion = {
@@ -188,14 +190,17 @@ object GameEngine {
     landScape:        LandScape,
     waveGenerator:    WaveGenerator,
     statusKeeper:     ActorRef,
-    gameOverCallback: Option[() => Unit]
+    gameOverCallback: Option[() => Unit],
+    delayTime:        FiniteDuration     = 50 millis
   ) = {
-    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback)
+    Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback, delayTime)
   }
 
   case object Protocol {
 
     case object Tick
+
+    case class UpdateDelayTime(delay: FiniteDuration)
 
     case class RocketFired(humanWeapon: HumanWeapon, moveVector: MoveVector, defenceTower: DefenceTower, explodingVelocity: Option[Double])
 

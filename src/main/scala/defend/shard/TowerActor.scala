@@ -67,7 +67,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
 
   @throws[Exception](classOf[Exception]) override def preStart(): Unit = {
     log.setMDC(mdc(()))
-    log.warning(s"Starting $persistenceId on $commandCenterName")
+    log.warning("Starting {} on {}", persistenceId, commandCenterName)
     println(s"Starting $persistenceId on $commandCenterName".white.onBlue)
     super.preStart()
     log.clearMDC()
@@ -76,7 +76,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
   override def onRecoveryCompleted(): Unit = {
     log.setMDC(mdc(()))
     val recoveryTime: Long = System.currentTimeMillis() - created
-    log.warning(s"Recovery completed for $persistenceId on $commandCenterName in ${recoveryTime}ms")
+    log.warning("Recovery completed for {} on {} in {}ms", persistenceId, commandCenterName, recoveryTime)
     println(s"Recovery completed for $persistenceId on $commandCenterName ${recoveryTime}ms".white.onBlue)
     super.preStart()
     log.clearMDC()
@@ -99,13 +99,13 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
 
   override def applyEvent(domainEvent: DomainEvent, currentData: TowerFsMData): TowerFsMData = domainEvent match {
     case AddExperience(exp, date) =>
-      log.info(s"Gained $exp experience points at ${timeFormat.format(date)}")
+      log.info("Gained {} experience points at {}", exp, timeFormat.format(date))
       currentData.copy(experience = currentData.experience + exp)
     case ScheduledStateChangeAgUpdate(at) =>
       log.info("Scheduled state change")
       currentData.copy(scheduledStateChangeAt = at)
     case UpdateSelf(index, me) =>
-      log.info(s"Updating self to $me")
+      log.info("Updating self to {}", me)
       currentData.copy(me = me, lastMessageId = index)
   }
 
@@ -113,13 +113,13 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
 
   when(FsmReady) {
     case Event(situation: Situation, data) =>
-      log.info(s"Received situation ${situation.index}")
+      log.info("Received situation {}", situation.index)
       val level = experienceToLevel(data.experience)
       val speed: Double = 70 + level * 30 + Random.nextInt(30)
       val range: Double = rangeForLevel(experienceToLevel(data.experience))
       val s = situation
       val target: Option[WeaponInAction[AlienWeapon]] = findMissileToIntercept(s.target, s.landScape, s.me.position, speed, range)
-      log.debug(s"Enemy rocket to intercept: $target")
+      log.debug("Enemy rocket to intercept: {}", target)
       if (target.isDefined) {
         val explosionRadius = 10 + 2 * level
         fireMissile(situation.me, target.get, speed, range, explosionRadius)
@@ -142,10 +142,10 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
 
   when(FsmReloading) {
     case Event(Reloaded, data) =>
-      log.info(s"Tower ${data.me} reloaded")
+      log.info("Tower {} reloaded", data.me)
       goto(FsmReady)
     case Event(s: Situation, data) =>
-      log.info(s"Received situation ${s.index}")
+      log.info("Received situation {}", s.index)
       if (data.me.contains(s.me)) {
         stay()
       } else {
@@ -176,7 +176,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
     case Event(MessageOfDeath(alienEmp, count), data) =>
       goto(FsmInfected) applying ScheduledStateChangeAgUpdate(Some(System.currentTimeMillis() + count * 1000))
     case Event(s: Situation, data) =>
-      log.info(s"Received situation ${s.index}")
+      log.info("Received situation {}", s.index)
       if (data.me.contains(s.me)) {
         stay()
       } else {
@@ -199,7 +199,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
       log.debug("Going to -> Ready")
       stateData.me.foreach(d => statusKeeper ! DefenceTowerStatus(d, isUp = true, defenceTowerState = DefenceTowerReady, commandCenterName = Some(commandCenterName), level = experienceToLevel(stateData.experience)))
     case _ -> FsmInfected =>
-      log.debug(s"Going to -> Infected until ${nextStateData.scheduledStateChangeAt}")
+      log.debug("Going to -> Infected until {}", nextStateData.scheduledStateChangeAt)
       stateData.me.foreach(d => statusKeeper ! DefenceTowerStatus(d, isUp = true, defenceTowerState = DefenceTowerInfected, commandCenterName = Some(commandCenterName), level = experienceToLevel(stateData.experience)))
   }
 
@@ -209,7 +209,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
 
   override def postStop(): Unit = {
     log.setMDC(mdc(()))
-    log.warning(s"Stopping $persistenceId on $commandCenterName")
+    log.warning("Stopping {} on {}", persistenceId, commandCenterName)
     println(s"Stopping $persistenceId on $commandCenterName".white.onBlue)
     super.postStop()
     log.clearMDC()

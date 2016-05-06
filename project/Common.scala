@@ -11,7 +11,7 @@ object Common {
     scalariformSettings ++ List(
       // Core settings
       organization := "otrebski",
-      version := "1.0.1",
+      version := "1.0.2",
       scalaVersion := Version.scala,
       crossScalaVersions := List(scalaVersion.value),
       resolvers ++= List(

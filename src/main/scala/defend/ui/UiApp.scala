@@ -2,6 +2,7 @@ package defend.ui
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import javax.swing.BorderFactory
 
 import akka.actor._
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -12,11 +13,11 @@ import defend.model._
 import defend.ui.JWarTheater.CommandCenterPopupAction
 import net.ceedubs.ficus.Ficus._
 
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.implicitConversions
 import scala.swing._
-import scala.swing.event.ButtonClicked
+import scala.swing.event.{ ButtonClicked, ValueChanged }
 
 object UiApp extends SimpleSwingApplication
     with SharedLevelDb
@@ -105,9 +106,23 @@ object UiApp extends SimpleSwingApplication
     private val statusLabel: Label = new Label("")
     private var isOver: Boolean = true
 
+    val delaySlider = new scala.swing.Slider() {
+      orientation = Orientation.Horizontal
+      max = 100
+      min = 10
+      //      minorTickSpacing = 10
+      majorTickSpacing = 10
+      //      paintTicks = true
+      paintTrack = true
+      paintLabels = true
+      snapToTicks = true
+      border = BorderFactory.createTitledBorder("Sleep time [ms]")
+    }
+
     listenTo(buttonStart)
     listenTo(showGrid)
     listenTo(showTracks)
+    listenTo(delaySlider)
 
     val f: () => Unit = { () => Swing.onEDT(gameFinished()) }
 
@@ -142,12 +157,16 @@ object UiApp extends SimpleSwingApplication
           case "Text wave"        => new AdWaveGenerator()
           case _                  => new TestWaveGenerator(quietPeriod = 5000)
         }
-
-        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f))))
+        import scala.concurrent.duration._
+        val delayDuration: FiniteDuration = FiniteDuration(delaySlider.value.toLong, scala.concurrent.duration.MILLISECONDS)
+        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f), delayDuration)))
         isOver = false
 
       case bc: ButtonClicked if bc.source == showGrid   => jWarTheater.showGrid = showGrid.selected
       case bc: ButtonClicked if bc.source == showTracks => jWarTheater.showTracks = showTracks.selected
+      case vc: ValueChanged if vc.source == delaySlider =>
+        val duration: FiniteDuration = FiniteDuration(delaySlider.value.toLong, scala.concurrent.duration.MILLISECONDS)
+        gameEngine.foreach(_ ! GameEngine.Protocol.UpdateDelayTime(duration))
     }
 
     val toolbar1 = new BoxPanel(Orientation.Horizontal) {
@@ -174,7 +193,17 @@ object UiApp extends SimpleSwingApplication
       add(jWarTheater, BorderPanel.Position.Center)
       add(toolbarSouth, BorderPanel.Position.South)
     }
-    contents = bp
+
+    private val settingsPanel = new BoxPanel(Orientation.Vertical) {
+      contents += delaySlider
+    }
+
+    val tb = new TabbedPane {
+      pages += new TabbedPane.Page("Game", bp)
+      pages += new TabbedPane.Page("Settings", settingsPanel)
+    }
+
+    contents = tb
 
     override def closeOperation() = {
       system.terminate()
@@ -206,6 +235,8 @@ object UiApp extends SimpleSwingApplication
       logger.info("Closing UIApp window")
       super.close()
     }
+
+    size = new Dimension(800, 600)
   }
 
   def generateCityAndDefence(width: Int, height: Int, distance: Int, towersPerCity: Int, towerNamePrefix: String): (List[City], List[DefenceTower]) = {

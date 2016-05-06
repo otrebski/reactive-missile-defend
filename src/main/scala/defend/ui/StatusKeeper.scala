@@ -44,7 +44,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
     case m: DefenceTowerStatus =>
       defenceTowersStatus = defenceTowersStatus.updated(m.defenceTower.name, m.copy(lastMessageTimestamp = Some(timeProvider())))
       towersLastKeepAlive = towersLastKeepAlive.updated(m.defenceTower.name, timeProvider())
-      log.debug(s"Defence tower statuses after update $defenceTowersStatus")
+      log.debug("Defence tower statuses after update {}", defenceTowersStatus)
     case m: OptionalWarTheater =>
       log.debug("Received optional war theater")
       if (m.landScape.isDefined) {
@@ -66,7 +66,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       points = m.points.getOrElse(points)
 
     case m: TowerKeepAlive =>
-      log.info(s"Received keepAlive from ${m.id}: $m")
+      log.info("Received keepAlive from {}: {}", m.id, m)
       towersLastKeepAlive = towersLastKeepAlive.updated(m.id, timeProvider())
       defenceTowersStatus.get(m.id)
         .orElse(Some(DefenceTowerStatus(DefenceTower(m.id, Position(0, 0)), m.towerState, isUp = true, Some(m.commandCenterName), m.level)))
@@ -108,7 +108,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
   }
 
   def sendStatus(): Unit = {
-
+    val statusKeeprNode: String = Cluster(system = context.system).selfAddress.toString
     previousExplosions = previousExplosions.filter(explosionFilter)
     lostMessages = lostMessages.filter(lostMessagesFilter)
 
@@ -148,7 +148,8 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       clusterLeader    = Cluster(context.system).state.leader.map(_.toString),
       persistenceState = effectivePersistenceState,
       lostMessages     = lostMessages,
-      recoveryTime     = recoveryTime
+      recoveryTime     = recoveryTime,
+      statusKeeper     = Some(statusKeeprNode)
     )
     sender ! warTheater
   }
