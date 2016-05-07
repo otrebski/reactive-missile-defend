@@ -13,7 +13,6 @@ trait DefendActorSystem {
 
   val config: Config = ConfigFactory.load()
   val system: ActorSystem = ActorSystem("defend", config)
-  system.actorOf(Props[SharedJournalSetter])
 
   Cluster(system).registerOnMemberRemoved {
     // exit JVM when ActorSystem has been terminated

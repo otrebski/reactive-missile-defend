@@ -5,32 +5,31 @@ import java.util.Date
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.cluster.singleton.{ ClusterSingletonProxy, ClusterSingletonProxySettings }
 import akka.event.Logging.MDC
-import com.typesafe.config.{ Config, ConfigFactory }
-import defend.cluster.SharedJournalSetter
+import defend.cluster.{ DefendActorSystem, StatusKeeperProxy, StatusKeeperSingleton }
 import defend.model._
 import pl.project13.scala.rainbow
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object CliUi extends App {
+object CliUi extends App
+    with DefendActorSystem
+    with StatusKeeperSingleton
+    with StatusKeeperProxy {
 
-  private val config: Config = ConfigFactory.load()
-  val system: ActorSystem = ActorSystem("defend", config)
-  system.actorOf(Props[SharedJournalSetter])
-  private lazy val settings: ClusterSingletonProxySettings =
-    ClusterSingletonProxySettings(system).withSingletonName("statusKeeper")
-  lazy val statusKeeper = system.actorOf(
-    ClusterSingletonProxy.props(
-      singletonManagerPath = "/user/singleton/",
-      settings             = settings
-    ),
-    name = "statusKeeperProxy"
-  )
+  //  system.actorOf(Props[SharedJournalSetter])
+  //  private lazy val settings: ClusterSingletonProxySettings =
+  //    ClusterSingletonProxySettings(system).withSingletonName("statusKeeper")
+  //  lazy val statusKeeper = system.actorOf(
+  //    ClusterSingletonProxy.props(
+  //      singletonManagerPath = "/user/singleton/",
+  //      settings             = settings
+  //    ),
+  //    name = "statusKeeperProxy"
+  //  )
 
-  system.actorOf(Props(new CliUiActor(statusKeeper)))
+  system.actorOf(Props(new CliUiActor(statusKeeperProxy)))
 
   class CliUiActor(statusKeeper: ActorRef) extends Actor with DiagnosticActorLogging {
 

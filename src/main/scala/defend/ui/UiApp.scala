@@ -20,7 +20,6 @@ import scala.swing._
 import scala.swing.event.{ ButtonClicked, ValueChanged }
 
 object UiApp extends SimpleSwingApplication
-    with SharedLevelDb
     with DefendActorSystem
     with StatusKeeperSingleton
     with StatusKeeperProxy
@@ -31,13 +30,25 @@ object UiApp extends SimpleSwingApplication
   println("Starting".green)
 
   system.actorOf(Props(new PersistenceMonitor(statusKeeperProxy, System.currentTimeMillis)))
+  val manualShotDamageSlider = new scala.swing.Slider() {
+    orientation = Orientation.Horizontal
+    max = 100
+    min = 0
+    minorTickSpacing = 5
+    majorTickSpacing = 10
+    paintTicks = true
+    paintTrack = true
+    paintLabels = true
+    snapToTicks = true
+    border = BorderFactory.createTitledBorder("Manual shoot damage")
+  }
   private val duration: Long = config.as[FiniteDuration]("akka.cluster.auto-down-unreachable-after").toMillis
   private val emptyWarTheater: WarTheater = WarTheater(List.empty, List.empty, List.empty, List.empty, LandScape(500, 500, 120), List.empty)
   private var gameEngine: Option[ActorRef] = None
   private val dragFunction = new ((DragEvent) => Unit) {
     override def apply(v1: DragEvent): Unit = {
       gameEngine.filter(_ => v1.moveVector.speed > 10)
-        .foreach(_ ! GameEngine.Protocol.AlienRocketFired(AlienMissile(16, 30), v1.start, v1.moveVector, None))
+        .foreach(_ ! GameEngine.Protocol.AlienRocketFired(AlienMissile(manualShotDamageSlider.value, 30), v1.start, v1.moveVector, None))
     }
   }
 
@@ -196,6 +207,7 @@ object UiApp extends SimpleSwingApplication
 
     private val settingsPanel = new BoxPanel(Orientation.Vertical) {
       contents += delaySlider
+      contents += manualShotDamageSlider
     }
 
     val tb = new TabbedPane {

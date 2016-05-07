@@ -1,6 +1,5 @@
 package defend
 
-import defend.cluster.SharedJournalApp
 import defend.ui.{ UiApp, CliUi }
 
 object Boot extends App {
@@ -28,10 +27,6 @@ object Boot extends App {
     case "cliui" :: Nil =>
       println(s"Starting cliui")
       CliUi.main(args)
-
-    case "sj" :: Nil =>
-      println(s"Starting sj")
-      SharedJournalApp.main(args)
 
     case "ui" :: Nil =>
       println(s"Starting ui")
