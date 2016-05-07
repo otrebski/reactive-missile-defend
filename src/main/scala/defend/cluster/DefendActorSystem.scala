@@ -1,15 +1,13 @@
 package defend.cluster
 
-import akka.actor.{ Props, ActorSystem }
+import akka.actor.ActorSystem
 import akka.cluster.Cluster
 import com.typesafe.config.{ Config, ConfigFactory }
-
 import pl.project13.scala.rainbow.Rainbow._
+
 import scala.concurrent.duration._
 trait DefendActorSystem {
   println("Creating DefendActorSystem".green)
-  //  private val clazz: Class[_] = this.getClass.getClassLoader.loadClass("defend.shard.FsmProtocol$AddExperience")
-  println("Class loaded".green)
 
   val config: Config = ConfigFactory.load()
   val system: ActorSystem = ActorSystem("defend", config)
