@@ -12,7 +12,7 @@ class MessageLostTracker(tower: DefenceTower, statusKeeper: ActorRef) extends Pe
   def persistenceId: String = s"messageLostTracker-${tower.name}"
 
   private var lastMessageId = 0
-  val snapshotEvery: Int = 100
+  val snapshotEvery: Int = 30
   private val created = System.currentTimeMillis()
 
   override def receiveRecover: Receive = {
