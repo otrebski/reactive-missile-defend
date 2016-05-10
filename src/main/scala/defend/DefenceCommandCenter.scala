@@ -10,7 +10,7 @@ import pl.project13.scala.rainbow.Rainbow._
 object DefenceCommandCenter extends App
     with Roles.CommandCenterRole
     with DefendActorSystem
-    with StatusKeeperSingleton
+    //    with StatusKeeperSingleton
     with StatusKeeperProxy
     with TowerShard
     with ShutdownNode
