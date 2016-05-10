@@ -205,9 +205,41 @@ object UiApp extends SimpleSwingApplication
       add(toolbarSouth, BorderPanel.Position.South)
     }
 
+    val ccOnlineColor = new Button {
+      text = "Online color"
+      action = new Action(text) {
+        override def apply(): Unit = ColorChooser.showDialog(bp, "CC online color", jWarTheater.ccOnlineColor).foreach(jWarTheater.ccOnlineColor = _)
+      }
+    }
+
+    val ccUnreachableColor = new Button {
+      text = "Unreachable color"
+      action = new Action(text) {
+        override def apply(): Unit = ColorChooser.showDialog(bp, "CC Unreachable color", jWarTheater.ccUnreachableColor).foreach(jWarTheater.ccUnreachableColor = _)
+      }
+    }
+
+    val ccOffline = new Button {
+      text = "Offline color"
+      action = new Action(text) {
+        override def apply(): Unit = ColorChooser.showDialog(bp, "CC offline color", jWarTheater.ccOfflineColor).foreach(jWarTheater.ccOfflineColor = _)
+      }
+    }
+
+    val messageLostColor = new Button {
+      text = "Message lost color"
+      action = new Action(text) {
+        override def apply(): Unit = ColorChooser.showDialog(bp, "Message lost color", jWarTheater.lostMessageColor).foreach(jWarTheater.lostMessageColor = _)
+      }
+    }
+
     private val settingsPanel = new BoxPanel(Orientation.Vertical) {
       contents += delaySlider
       contents += manualShotDamageSlider
+      contents += ccOnlineColor
+      contents += ccUnreachableColor
+      contents += ccOffline
+      contents += messageLostColor
     }
 
     val tb = new TabbedPane {
