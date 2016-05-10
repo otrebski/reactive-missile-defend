@@ -16,6 +16,7 @@ import defend.ui.StatusKeeper.Protocol.LostMessages
 
 import scala.collection.immutable.Queue
 import scala.language.implicitConversions
+import scala.swing.Color
 
 //import scala.language.implicitConversions
 
@@ -33,6 +34,11 @@ class JWarTheater(
   val timeProvider:             () => Long                     = System.currentTimeMillis
 )
     extends Component {
+
+  var lostMessageColor = Color.WHITE
+  var ccOnlineColor = new Color(127, 255, 0)
+  var ccOfflineColor = new Color(205, 92, 92)
+  var ccUnreachableColor = Color.ORANGE
 
   var paintDebug = true
   //Nodes go down with  autoDownUnreachableAfter milliseconds after node is unreachable.
@@ -318,7 +324,7 @@ class JWarTheater(
 
         if (lostMessagesByTower > 0) {
           d.setFont(debugFont)
-          d.setColor(Color.RED)
+          d.setColor(lostMessageColor)
           val metrics: FontMetrics = d.getFontMetrics()
           val s: String = s"$lostMessagesByTower"
           metrics.stringWidth(s)
@@ -503,9 +509,9 @@ class JWarTheater(
       }
 
       d.setColor(center.status match {
-        case CommandCenterUnreachable => Color.ORANGE
-        case CommandCenterOnline      => Color.GREEN
-        case CommandCenterOffline     => Color.RED
+        case CommandCenterUnreachable => ccUnreachableColor
+        case CommandCenterOnline      => ccOnlineColor
+        case CommandCenterOffline     => ccOfflineColor
       })
       d.drawString(name, xPos + serverIcon.getWidth * 2.3, scape.height - yPos + fontHeight)
       paintIcon(d, scape, icon, xPos + icon.getWidth, yPos - fontHeight)
