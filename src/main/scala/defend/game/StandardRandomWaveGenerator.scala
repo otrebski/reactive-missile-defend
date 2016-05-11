@@ -7,7 +7,7 @@ import scala.util.Random
 
 class StandardRandomWaveGenerator(quietPeriod: Long = 5000) extends WaveGenerator {
 
-  val missilesPerWave = 10
+  val missilesPerWave = 7
   val maxSpeed = 100
   var lastWaveGeneratedTs = 0l
 
