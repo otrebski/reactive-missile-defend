@@ -86,16 +86,27 @@ First start Cassandra which will be used as a persitence for Actors. You can run
 Run Swing UI. This node is also game engine. Do not kill it. In terminal run
 
 * ```export SEED_NODE=akka.tcp://defend@127.0.0.1:3000```
+* ```export SEED_NODE2=akka.tcp://defend@127.0.0.1:4000```
 * ```export HOST=127.0.0.1```
-* ```export PORT=2500```
+* ```export PORT=3000```
 * ```export CASSANDRA_HOST=myhost```
 * ```sbt ui```
 
-Run Command Centers nodes (as many as you want). Every instance need to have different PORT
+Run Command Line UI  node (at least one). Every instance need to have different PORT. It can be used to observe Cluster Singleton migration / failover.
 
 * ```export SEED_NODE=akka.tcp://defend@127.0.0.1:3000```
+* ```export SEED_NODE2=akka.tcp://defend@127.0.0.1:4000```
 * ```export HOST=127.0.0.1```
-* ```export PORT=2551```
+* ```export PORT=4000```
+* ```export CASSANDRA_HOST=myhost```
+* ```sbt cliui```
+
+Run Command Centers nodes (as many as you want, at least 1). Every instance need to have different PORT
+
+* ```export SEED_NODE=akka.tcp://defend@127.0.0.1:3000```
+* ```export SEED_NODE2=akka.tcp://defend@127.0.0.1:4000```
+* ```export HOST=127.0.0.1```
+* ```export PORT=2501```
 * ```export CASSANDRA_HOST=myhost```
 * ```sbt cc```
 
@@ -112,11 +123,13 @@ You have to also export following env variables:
  * ```HOST``` - IP address used for communication
  * ```PORT``` - Port number
  * ```SEED_NODE``` - Akka seed node for example: ```akka.tcp://defend@192.168.0.3:3000```
+ * ```SEED_NODE2``` - Second Akka seed node for example: ```akka.tcp://defend@192.168.0.3:4000```
  * ```CASSANDRA_HOST``` - Contact point for Cassandra, default value is 127.0.0.1
 
 Start nodes:
 
- * ```missiledefend ui``` - UI
+ * ```missiledefend ui``` - UI - This node will host StatusKeeper actor (Cluster Singleton)
+ * ```missiledefend cliui``` - Command line UI - This node will host StatusKeeper actor (Cluster Singleton)
  * ```missiledefend cc``` - Command Center to host defence towers
  * ```missiledefend cc``` - Another Command Center on another machine
 
