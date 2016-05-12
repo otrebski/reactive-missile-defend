@@ -61,7 +61,7 @@ Cluster should have following nodes:
 
 ## Cassandra as persistence ##
 
-This project uses Cassandra 2.2 as a persistence. You can run cassandra using [Docker](https://www.docker.com/) or connect to existing Cassandra cluster. Details of Cassandra docker image can be found [here](https://hub.docker.com/_/cassandra/). Two keyspaces will be created:
+This project uses Cassandra 2 or 3 as a persistence. You can run cassandra using [Docker](https://www.docker.com/) or connect to existing Cassandra cluster. Details of Cassandra docker image can be found [here](https://hub.docker.com/_/cassandra/). Two keyspaces will be created:
 * rmd_journal - for journal
 * rmd_snapshot - for snapshots
 These keyspaces can be deleted between running game. 
@@ -135,7 +135,7 @@ Start nodes:
 
 # Scenarios to run
 
-## Power failure, JVM/System crush
+## Power failure, JVM/System crash
 * Start cluster
 * Start game
 * Kill one of "Command Center" JVM
