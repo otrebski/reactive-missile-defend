@@ -6,6 +6,8 @@ Game looks like this:
 
 ![view](https://raw.githubusercontent.com/otrebski/reactive-missile-defend/master/doc/images/screen_general.png)
 
+## Presentation
+Recording from talk is available [Scala by the bay youtube channel](https://www.youtube.com/watch?v=g7LHqcMg6MI)
 
 ## Defence
 
