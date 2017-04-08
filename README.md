@@ -70,9 +70,9 @@ These keyspaces can be deleted between running game.
 
 ### Using Cassandra from docker ###
 ```
-docker pull cassandra:2.2
+docker pull cassandra:3.1
 
-docker run -d -p 9042:9042 --name cass cassandra:2.2
+docker run -d -p 9042:9042 --name cass cassandra:3.1
 ```
 If you are Windows or OSX user you have to add port forwarding for port 9042.
 

@@ -15,11 +15,9 @@ object Common {
       scalaVersion := Version.scala,
       crossScalaVersions := List(scalaVersion.value),
       resolvers ++= List(
-        "patriknw at bintray" at "http://dl.bintray.com/patriknw/maven",
         "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven",
         "Sonatype OSS Releases" at "http://oss.sonatype.org/content/repositories/releases/",
-        "Otros at bintrat" at "https://bintray.com/artifact/download/otros-systems/maven",
-        "krasserm at bintray/cassandra" at "http://dl.bintray.com/krasserm/maven"
+        "Otros at bintray" at "https://bintray.com/artifact/download/otros-systems/maven"
 ),
       scalacOptions ++= List(
         "-unchecked",
