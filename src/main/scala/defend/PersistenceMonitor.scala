@@ -1,6 +1,6 @@
 package defend
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import akka.pattern.ask
 import akka.persistence._
 import akka.util.Timeout
@@ -8,7 +8,7 @@ import defend.PersistenceMonitor._
 import pl.project13.scala.rainbow._
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
 import scala.language.postfixOps
 import scala.util.Success
 
@@ -85,9 +85,9 @@ class TestingPersistentActor(id: String) extends PersistentActor {
 
   override def receiveRecover: Receive = {
     case SnapshotOffer(_, Save(s)) => status = s
-    case RecoveryCompleted =>
-    case Save(s) => status = s
-    case a: Any => println(s"Recover Unknown message: $a".yellow)
+    case RecoveryCompleted         =>
+    case Save(s)                   => status = s
+    case a: Any                    => println(s"Recover Unknown message: $a".yellow)
   }
 
   override def receiveCommand: Receive = {
@@ -98,9 +98,9 @@ class TestingPersistentActor(id: String) extends PersistentActor {
       sender() ! Loaded(status)
     case SaveSnapshot =>
       saveSnapshot(Save(status))
-    case SaveSnapshotSuccess(_) => println(s"Successfully saved snapshot".green)
+    case SaveSnapshotSuccess(_)        => println(s"Successfully saved snapshot".green)
     case SaveSnapshotFailure(_, cause) => println(s"Failure saving snapshot $cause".red)
-    case a: Any => println(s"Received unknown message $a".yellow)
+    case a: Any                        => println(s"Received unknown message $a".yellow)
 
   }
 

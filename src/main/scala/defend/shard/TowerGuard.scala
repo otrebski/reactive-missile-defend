@@ -3,7 +3,7 @@ package defend.shard
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props }
 import akka.cluster.sharding.ShardRegion
-import akka.pattern.{ BackoffSupervisor, PipeToSupport }
+import akka.pattern.{ BackoffOpts, BackoffSupervisor, PipeToSupport }
 import com.datastax.driver.core.exceptions.ReadTimeoutException
 import defend.Envelope
 import defend.shard.MessageLostTracker.LastMessageId
@@ -35,7 +35,7 @@ class TowerGuard(statusKeeper: ActorRef, reloadTime: FiniteDuration) extends Act
       towerActor forward a
   }
 
-  override val supervisorStrategy =
+  override val supervisorStrategy: OneForOneStrategy =
     OneForOneStrategy(maxNrOfRetries  = 10, withinTimeRange = 1 minute) {
       case _: ReadTimeoutException => Restart
       case _: Exception            => Restart
@@ -43,11 +43,12 @@ class TowerGuard(statusKeeper: ActorRef, reloadTime: FiniteDuration) extends Act
 
   private def supervised(props: Props) = {
     BackoffSupervisor.props(
+    BackoffOpts.onFailure(
       childProps   = props,
       childName    = "backedOffActor",
       minBackoff   = 1 second,
       maxBackoff   = 3 minutes,
-      randomFactor = 0.4)
+      randomFactor = 0.4))
   }
 }
 
