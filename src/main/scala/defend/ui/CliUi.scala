@@ -14,9 +14,9 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object CliUi extends App
-    with DefendActorSystem
-    with StatusKeeperSingleton
-    with StatusKeeperProxy {
+  with DefendActorSystem
+  with StatusKeeperSingleton
+  with StatusKeeperProxy {
 
   //  system.actorOf(Props[SharedJournalSetter])
   //  private lazy val settings: ClusterSingletonProxySettings =
@@ -55,7 +55,7 @@ object CliUi extends App
   }
 
   def warTheaterToString(w: WarTheater): String = {
-    import rainbow.Rainbow._
+    import rainbow._
     val date = new SimpleDateFormat("HH:mm:ss.SSS").format(new Date())
     val cities: String = w.city.filter(_.condition > 0).map { c =>
       val state = s"${c.condition}% ${"X" * (c.condition / 10)}"

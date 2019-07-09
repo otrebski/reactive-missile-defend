@@ -1,21 +1,21 @@
 package defend
 
-import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
+import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.pattern.ask
 import akka.persistence._
 import akka.util.Timeout
 import defend.PersistenceMonitor._
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 import scala.util.Success
 
 class PersistenceMonitor(sendStateTo: ActorRef, timeProvider: () => Long) extends Actor {
 
-  implicit val timeout = Timeout(2 seconds)
-  implicit val ec = ExecutionContext.global
+  implicit val timeout: Timeout = Timeout(2 seconds)
+  implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
@@ -31,23 +31,20 @@ class PersistenceMonitor(sendStateTo: ActorRef, timeProvider: () => Long) extend
       val string: String = System.currentTimeMillis().toString
       val future: Future[Any] = actor ? Save(string)
       actor ! SaveSnapshot
-      future.onSuccess {
-        case Saved =>
+      future.onComplete {
+        case Success(Saved) =>
           actor ! PoisonPill
           val actor2 = context.actorOf(props)
           val futureState = actor2 ? GetState
           futureState.onComplete {
             case Success(Loaded(`string`)) =>
               sendStateTo ! PersistenceOk(timeProvider())
-            case Success(x) =>
+            case Success(_) =>
               sendStateTo ! PersistenceError(timeProvider())
             case _ =>
               sendStateTo ! PersistenceError(timeProvider())
           }
-
-      }
-      future.onFailure {
-        case f: Any =>
+        case _: Any =>
           sendStateTo ! PersistenceError(timeProvider())
       }
 
@@ -87,10 +84,10 @@ class TestingPersistentActor(id: String) extends PersistentActor {
   var status = "?"
 
   override def receiveRecover: Receive = {
-    case SnapshotOffer(c, Save(s)) => status = s
-    case RecoveryCompleted         =>
-    case Save(s)                   => status = s
-    case a: Any                    => println(s"Recover Unknown message: $a".yellow)
+    case SnapshotOffer(_, Save(s)) => status = s
+    case RecoveryCompleted =>
+    case Save(s) => status = s
+    case a: Any => println(s"Recover Unknown message: $a".yellow)
   }
 
   override def receiveCommand: Receive = {
@@ -101,9 +98,9 @@ class TestingPersistentActor(id: String) extends PersistentActor {
       sender() ! Loaded(status)
     case SaveSnapshot =>
       saveSnapshot(Save(status))
-    case SaveSnapshotSuccess(meta)        => println(s"Successfully saved snapshot".green)
-    case SaveSnapshotFailure(meta, cause) => println(s"Failure saving snapshot $cause".red)
-    case a: Any                           => println(s"Received unknown message $a".yellow)
+    case SaveSnapshotSuccess(_) => println(s"Successfully saved snapshot".green)
+    case SaveSnapshotFailure(_, cause) => println(s"Failure saving snapshot $cause".red)
+    case a: Any => println(s"Received unknown message $a".yellow)
 
   }
 

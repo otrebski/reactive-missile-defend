@@ -31,9 +31,8 @@ class JWarTheater(
   var showTracks:               Boolean                        = false,
   var dragListener:             Option[(DragEvent) => Unit]    = None,
   var commandCenterPopupAction: List[CommandCenterPopupAction] = List.empty,
-  val timeProvider:             () => Long                     = System.currentTimeMillis
-)
-    extends Component {
+  val timeProvider:             () => Long                     = () => System.currentTimeMillis)
+  extends Component {
 
   var lostMessageColor = Color.WHITE
   var ccOnlineColor = new Color(127, 255, 0)
@@ -61,8 +60,7 @@ class JWarTheater(
   private val defenceIconReloading: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/tower_reloading.png"))
   private val defenceIconInfected = List(
     ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/poop-smiley.png")),
-    ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/poop-smiley-sad.png"))
-  )
+    ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/poop-smiley-sad.png")))
   private val humanRocket: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/human_rocket.png"))
   private val alienRocket: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/alien_rocket.png"))
   private val nukeIcon: BufferedImage = ImageIO.read(this.getClass.getClassLoader.getResourceAsStream("icons/radioactivity.png"))
@@ -392,8 +390,7 @@ class JWarTheater(
         g.fillPolygon(new Polygon(
           Array(position.x.toInt, position.x.toInt - height, position.x.toInt + height),
           Array(yPos + (lines.length + 1) * height, yPos + (lines.length - 1) * height + border, yPos + (lines.length - 1) * height + border),
-          3
-        ))
+          3))
         g.setColor(Color.BLACK)
         lines.zipWithIndex.foreach(l => {
           g.drawString(l._1, xPox, yPos + l._2 * height)
@@ -660,8 +657,7 @@ object JWarTheater extends SimpleSwingApplication {
       WeaponInAction(AlienMissile(100, 10), Position(570, 560), MoveVector(-Math.PI * 0.55, 1)),
       WeaponInAction(AlienMissile(100, 10), Position(590, 560), MoveVector(-Math.PI * 0.75, 1)),
       WeaponInAction(AlienMissile(100, 10), Position(610, 560), MoveVector(-Math.PI * 1.25, 1)),
-      WeaponInAction(AlienEmp(100, 10), Position(150, 550), MoveVector(-Math.PI * 0.25, 2))
-    )
+      WeaponInAction(AlienEmp(100, 10), Position(150, 550), MoveVector(-Math.PI * 0.25, 2)))
 
     val humanWeapons = List(
       WeaponInAction(HumanMissile("1", 10, 20), Position(200, 200), MoveVector(Math.PI * 0.5, 6)),
@@ -670,20 +666,17 @@ object JWarTheater extends SimpleSwingApplication {
       WeaponInAction(HumanMissile("4", 10, 20), Position(260, 200), MoveVector(Math.PI * 0.5, 12)),
       WeaponInAction(HumanMissile("5", 10, 20), Position(280, 200), MoveVector(Math.PI * 0.5, 14)),
       WeaponInAction(HumanMissile("6", 10, 20), Position(300, 200), MoveVector(Math.PI * 0.5, 16)),
-      WeaponInAction(HumanMissile("7", 10, 20), Position(320, 4200), MoveVector(Math.PI * 0.5, 18))
-    )
+      WeaponInAction(HumanMissile("7", 10, 20), Position(320, 4200), MoveVector(Math.PI * 0.5, 18)))
 
     val commandCentres = List(
       CommandCenter("akka.tcp://a@192.168.2.11:3000", status = CommandCenterOnline, 10000),
       CommandCenter("akka.tcp://a@192.168.2.12:3000", status = CommandCenterUnreachable, 7000),
-      CommandCenter("akka.tcp://a@192.168.2.13:3000", status = CommandCenterOffline, 0)
-    )
+      CommandCenter("akka.tcp://a@192.168.2.13:3000", status = CommandCenterOffline, 0))
 
     val explosions = List(
       ExplosionEvent(Explosion(Position(100, 100), AlienMissile(10, 10)), 0.2f),
       ExplosionEvent(Explosion(Position(400, 100), AlienMissile(10, 20)), 0.4f),
-      ExplosionEvent(Explosion(Position(500, 100), AlienMissile(10, 30)), 0.9f)
-    )
+      ExplosionEvent(Explosion(Position(500, 100), AlienMissile(10, 30)), 0.9f))
 
     def status(i: Int): DefenceTowerState = i % 7 match {
       case 3 => DefenceTowerReloading
@@ -699,8 +692,7 @@ object JWarTheater extends SimpleSwingApplication {
         isUp                 = t._2 % 3 != 2,
         defenceTowerState    = status(t._2),
         commandCenterName    = Some(commandCentres(t._2 % commandCentres.size).name),
-        lastMessageTimestamp = Some(400)
-      ))
+        lastMessageTimestamp = Some(400)))
 
     val lostMessages = towerStatuses
       .map { t =>
@@ -717,7 +709,7 @@ object JWarTheater extends SimpleSwingApplication {
     }
 
     var warTheater: WarTheater = WarTheater(towerStatuses, cities, enemyWeapons,
-      humanWeapons, landScape = landScapeA, commandCentres = commandCentres, explosions = explosions, lostMessages = lostMessages)
+                                            humanWeapons, landScape = landScapeA, commandCentres = commandCentres, explosions = explosions, lostMessages = lostMessages)
 
     title = "Missile defend test"
     val dragFun = new ((DragEvent) => Unit) {
@@ -729,9 +721,9 @@ object JWarTheater extends SimpleSwingApplication {
       override def apply(): Long = System.currentTimeMillis()
     }
     private val theater: JWarTheater = new JWarTheater(warTheater, 8 * 1000, Some(0), true,
-      dragListener             = Some(dragFun),
-      timeProvider             = timeProvider,
-      commandCenterPopupAction = List(new CommandCenterPopupAction("Some action on", new (String => Unit) {
+                                                       dragListener             = Some(dragFun),
+                                                       timeProvider             = timeProvider,
+                                                       commandCenterPopupAction = List(new CommandCenterPopupAction("Some action on", new (String => Unit) {
         override def apply(v1: String): Unit = println(s"Disconnecting $v1")
       })))
     contents = new BoxPanel(Orientation.Vertical) {
@@ -774,8 +766,7 @@ object JWarTheater extends SimpleSwingApplication {
           humanWeapons   = movedHumanWeapons,
           timestamp      = System.currentTimeMillis() + 7000,
           defence        = defenceTowerStatuses,
-          commandCentres = cc
-        )
+          commandCentres = cc)
 
         theater.updateState(warTheater)
       }

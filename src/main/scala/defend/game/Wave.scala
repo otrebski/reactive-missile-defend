@@ -274,9 +274,7 @@ object Wave {
     "w" -> letterW,
     "y" -> letterY,
     "z" -> letterZ,
-    " " -> letterSpace
-
-  ).mapValues(f)
+    " " -> letterSpace).mapValues(f)
 
   def stringPos(string: String, landScape: LandScape): List[Position] = {
     val default = lettersMap.get(" ").get

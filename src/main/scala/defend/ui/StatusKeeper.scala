@@ -71,7 +71,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       defenceTowersStatus.get(m.id)
         .orElse(Some(DefenceTowerStatus(DefenceTower(m.id, Position(0, 0)), m.towerState, isUp = true, Some(m.commandCenterName), m.level)))
         .map {
-          _.copy(commandCenterName = Some(m.commandCenterName), level = m.level, lastMessageTimestamp = Some(timeProvider()))
+          _.copy(commandCenterName    = Some(m.commandCenterName), level = m.level, lastMessageTimestamp = Some(timeProvider()))
         }.foreach { x =>
           defenceTowersStatus = defenceTowersStatus.updated(m.id, x)
         }
@@ -79,26 +79,26 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       commandCenters.get(m.commandCenterName).foreach(cc => commandCenters = commandCenters.updated(m.commandCenterName, cc.copy(lastMessageTimestamp = timeProvider())))
     case m: MemberUp if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
     case m: MemberRemoved if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOffline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOffline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOffline))
     case m: UnreachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterUnreachable, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterUnreachable, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterUnreachable))
 
     case m: ReachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
 
     case p: PersistenceState => persistenceState = p
 
     case lm @ LostMessages(tower, count, timestamp) =>
-      import pl.project13.scala.rainbow.Rainbow._
+      import pl.project13.scala.rainbow._
       println(s"Tower ${tower.name} has lost $count messages at $timestamp".red)
       //hack for using with Raspberry PI without time synchronization
       lostMessages = lm.copy(timestamp = timeProvider()) :: lostMessages
@@ -124,8 +124,7 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
           isUp                 = up,
           commandCenterName    = n,
           level                = defenceTowersStatus.get(d.name).map(_.level).getOrElse(0),
-          lastMessageTimestamp = Some(t)
-        )
+          lastMessageTimestamp = Some(t))
     }
 
     val now = timeProvider()
@@ -149,20 +148,19 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       persistenceState = effectivePersistenceState,
       lostMessages     = lostMessages,
       recoveryTime     = recoveryTime,
-      statusKeeper     = Some(statusKeeprNode)
-    )
+      statusKeeper     = Some(statusKeeprNode))
     sender ! warTheater
   }
 
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
-    import pl.project13.scala.rainbow.Rainbow._
+    import pl.project13.scala.rainbow._
     println("Starting".green + " StatusKeeper  ".yellow)
     Cluster(context.system).subscribe(self, ClusterEvent.InitialStateAsEvents,
-      classOf[MemberUp],
-      classOf[MemberRemoved],
-      classOf[UnreachableMember],
-      classOf[ReachableMember])
+                                      classOf[MemberUp],
+                                      classOf[MemberRemoved],
+                                      classOf[UnreachableMember],
+                                      classOf[ReachableMember])
   }
 
   val explosionFilter: ((Explosion, Long)) => Boolean = {

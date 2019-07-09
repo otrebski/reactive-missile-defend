@@ -20,10 +20,9 @@ class GameEngine(
   waveGenerator:    WaveGenerator,
   statusKeeper:     ActorRef,
   gameOverCallback: Option[() => Unit],
-  var delayTime:    FiniteDuration
-)
-    extends Actor
-    with DiagnosticActorLogging {
+  var delayTime:    FiniteDuration)
+  extends Actor
+  with DiagnosticActorLogging {
 
   private var lastTimestamp: Long = System.currentTimeMillis()
   private var alienWeaponsInAction = List.empty[WeaponInAction[AlienWeapon]]
@@ -32,7 +31,7 @@ class GameEngine(
   private var rocketsFired = List.empty[RocketFired]
   private var points = 0
   private var waves = List.empty[Wave]
-  private val waveGeneratorActor = context.actorOf(EnemyGenerator.props(System.currentTimeMillis(), System.currentTimeMillis, waveGenerator))
+  private val waveGeneratorActor = context.actorOf(EnemyGenerator.props(System.currentTimeMillis(), () => System.currentTimeMillis, waveGenerator))
 
   implicit val ec = context.system.dispatcher
   private val towerShard: ActorRef = ClusterSharding(context.system).shardRegion(TowerGuard.shardRegion)
@@ -120,8 +119,7 @@ class GameEngine(
         humanWeapons = Some(humanWeaponInAction),
         explosions   = Some(allExplosions),
         points       = Some(points),
-        landScape    = Some(landScape)
-      )
+        landScape    = Some(landScape))
       statusKeeper ! optionalWarTheater
 
       lastTimestamp = now
@@ -185,14 +183,13 @@ class GameEngine(
 object GameEngine {
 
   def props(
-    defence:          List[DefenceTower],
-    city:             List[City],
-    landScape:        LandScape,
-    waveGenerator:    WaveGenerator,
-    statusKeeper:     ActorRef,
-    gameOverCallback: Option[() => Unit],
-    delayTime:        FiniteDuration     = 50 millis
-  ) = {
+      defence:          List[DefenceTower],
+      city:             List[City],
+      landScape:        LandScape,
+      waveGenerator:    WaveGenerator,
+      statusKeeper:     ActorRef,
+      gameOverCallback: Option[() => Unit],
+      delayTime:        FiniteDuration     = 50 millis) = {
     Props(classOf[GameEngine], defence, city, landScape, waveGenerator, statusKeeper, gameOverCallback, delayTime)
   }
 

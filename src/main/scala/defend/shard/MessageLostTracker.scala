@@ -5,7 +5,7 @@ import akka.persistence._
 import defend.model.DefenceTower
 import defend.shard.MessageLostTracker.LastMessageId
 import defend.ui.StatusKeeper
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 class MessageLostTracker(tower: DefenceTower, statusKeeper: ActorRef) extends PersistentActor with ActorLogging {
 

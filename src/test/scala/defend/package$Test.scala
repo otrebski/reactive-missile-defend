@@ -93,15 +93,12 @@ class package$Test extends FlatSpec with Matchers {
     //given
     val humanWeapon: List[WeaponInAction[HumanWeapon]] = List(
       WeaponInAction(HumanMissile("a", 1, 20), Position(103, 105), MoveVector(0, 0)),
-      WeaponInAction(HumanMissile("b", 1, 20), Position(200, 100), MoveVector(0, 0))
-
-    )
+      WeaponInAction(HumanMissile("b", 1, 20), Position(200, 100), MoveVector(0, 0)))
     val alienWeapon: List[WeaponInAction[AlienWeapon]] = List(
       WeaponInAction(alienBomb, Position(100, 100), MoveVector(0, 0)),
       WeaponInAction(AlienEmp(20, 1), Position(200, 200), MoveVector(0, 0)),
       WeaponInAction(AlienMissile(20, 1), Position(300, 300), MoveVector(0, 0)),
-      WeaponInAction(AlienNuke(20, 1), Position(400, 400), MoveVector(0, 0))
-    )
+      WeaponInAction(AlienNuke(20, 1), Position(400, 400), MoveVector(0, 0)))
 
     //when
     val collisions: List[(WeaponInAction[HumanWeapon], List[WeaponInAction[AlienWeapon]])] = findCollisions(humanWeapon, alienWeapon)
@@ -115,15 +112,12 @@ class package$Test extends FlatSpec with Matchers {
     val humanWeapon: List[WeaponInAction[HumanWeapon]] = List(
       WeaponInAction(HumanMissile("a", 1, 20), Position(103, 105), MoveVector(0, 0)),
       WeaponInAction(HumanMissile("b", 1, 20), Position(202, 200), MoveVector(0, 0)),
-      WeaponInAction(HumanMissile("c", 1, 20), Position(200, 100), MoveVector(0, 0))
-
-    )
+      WeaponInAction(HumanMissile("c", 1, 20), Position(200, 100), MoveVector(0, 0)))
     val alienWeapon: List[WeaponInAction[AlienWeapon]] = List(
       WeaponInAction(AlienBomb(20, 1), Position(100, 100), MoveVector(0, 0)),
       WeaponInAction(AlienEmp(20, 1), Position(200, 200), MoveVector(0, 0)),
       WeaponInAction(AlienMissile(20, 1), Position(300, 300), MoveVector(0, 0)),
-      WeaponInAction(AlienNuke(20, 1), Position(400, 400), MoveVector(0, 0))
-    )
+      WeaponInAction(AlienNuke(20, 1), Position(400, 400), MoveVector(0, 0)))
 
     //when
     val collisions: List[(WeaponInAction[HumanWeapon], List[WeaponInAction[AlienWeapon]])] = findCollisions(humanWeapon, alienWeapon)

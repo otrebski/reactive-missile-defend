@@ -14,7 +14,7 @@ import defend.shard.FsmProtocol.{ AddExperience, DomainEvent, ScheduledStateChan
 import defend.shard.TowerActor.Protocol.{ MessageOfDeath, Ping, Reloaded, Situation }
 import defend.ui.StatusKeeper
 import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
@@ -40,8 +40,7 @@ case class TowerFsMData(
   me:                     Option[DefenceTower],
   experience:             Int                  = 0,
   lastMessageId:          Int                  = 0,
-  scheduledStateChangeAt: Option[Long]         = None
-)
+  scheduledStateChangeAt: Option[Long]         = None)
 
 object FsmProtocol {
 
@@ -56,8 +55,8 @@ object FsmProtocol {
 }
 
 class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit val domainEventClassTag: ClassTag[FsmProtocol.DomainEvent])
-    extends PersistentFSM[TowerFsmState, TowerFsMData, FsmProtocol.DomainEvent]
-    with DiagnosticActorLogging {
+  extends PersistentFSM[TowerFsmState, TowerFsMData, FsmProtocol.DomainEvent]
+  with DiagnosticActorLogging {
 
   override val log = akka.event.Logging(this)
   val nextLevelReduction = 0.05
@@ -106,7 +105,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
       currentData.copy(scheduledStateChangeAt = at)
     case UpdateSelf(index, me) =>
       log.info("Updating self to {}", me)
-      currentData.copy(me = me, lastMessageId = index)
+      currentData.copy(me            = me, lastMessageId = index)
   }
 
   startWith(FsmReady, TowerFsMData(None, 0, 0, None))

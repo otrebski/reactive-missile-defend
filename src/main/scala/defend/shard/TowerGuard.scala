@@ -36,7 +36,7 @@ class TowerGuard(statusKeeper: ActorRef, reloadTime: FiniteDuration) extends Act
   }
 
   override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+    OneForOneStrategy(maxNrOfRetries  = 10, withinTimeRange = 1 minute) {
       case _: ReadTimeoutException => Restart
       case _: Exception            => Restart
     }
@@ -47,8 +47,7 @@ class TowerGuard(statusKeeper: ActorRef, reloadTime: FiniteDuration) extends Act
       childName    = "backedOffActor",
       minBackoff   = 1 second,
       maxBackoff   = 3 minutes,
-      randomFactor = 0.4
-    )
+      randomFactor = 0.4)
   }
 }
 

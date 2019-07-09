@@ -8,15 +8,13 @@ package object defend {
   def move(position: Position, moveVector: MoveVector, millis: Long): Position = {
     Position(
       position.x + (moveVector.speed * Math.cos(moveVector.direction) * millis) / 1000,
-      position.y + (moveVector.speed * Math.sin(moveVector.direction) * millis) / 1000
-    )
+      position.y + (moveVector.speed * Math.sin(moveVector.direction) * millis) / 1000)
   }
 
   def move(position: Position, moveVector: MoveVector, millis: Double): Position = {
     Position(
       position.x + (moveVector.speed * Math.cos(moveVector.direction) * millis) / 1000,
-      position.y + (moveVector.speed * Math.sin(moveVector.direction) * millis) / 1000
-    )
+      position.y + (moveVector.speed * Math.sin(moveVector.direction) * millis) / 1000)
   }
 
   def findMissileToIntercept(list: List[WeaponInAction[AlienWeapon]], landScape: LandScape, tower: Position, speed: Double, range: Double): Option[WeaponInAction[AlienWeapon]] = {
@@ -177,8 +175,7 @@ package object defend {
           HumanMissile(me.name, 1, explosionRadius),
           v.moveVector,
           me,
-          Some(range * Math.sin(v.moveVector.direction) + me.position.y)
-        )
+          Some(range * Math.sin(v.moveVector.direction) + me.position.y))
     }
   }
 }

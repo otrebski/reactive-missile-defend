@@ -63,8 +63,7 @@ object CommandCenterIcons {
     "3006" -> "magnet.png",
     "3007" -> "piano.png",
     "3008" -> "ruby.png",
-    "3009" -> "snowman-hat.png"
-  ).map(x => {
+    "3009" -> "snowman-hat.png").map(x => {
       val name: String = "cc-by-port/" + x._2
       (x._1, ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(name)))
     })
@@ -81,8 +80,7 @@ object CommandCenterIcons {
     "192.168.2.10" -> "cup.png",
     "192.168.2.11" -> "diamond.png",
     "192.168.2.12" -> "ruby.png",
-    "192.168.2.13" -> "magnet.png"
-  ).map(x => {
+    "192.168.2.13" -> "magnet.png").map(x => {
       val name: String = "cc-by-port/" + x._2
       (x._1, ImageIO.read(this.getClass.getClassLoader.getResourceAsStream(name)))
     })

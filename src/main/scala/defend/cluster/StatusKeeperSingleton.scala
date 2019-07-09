@@ -3,7 +3,7 @@ package defend.cluster
 import akka.actor.{ ActorSystem, PoisonPill }
 import akka.cluster.singleton.{ ClusterSingletonManager, ClusterSingletonManagerSettings }
 import defend.ui.StatusKeeper
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 trait StatusKeeperSingleton {
 
@@ -12,7 +12,6 @@ trait StatusKeeperSingleton {
   val props = ClusterSingletonManager.props(
     singletonProps     = StatusKeeper.props(),
     terminationMessage = PoisonPill,
-    settings           = ClusterSingletonManagerSettings(system).withSingletonName("statusKeeper")
-  )
+    settings           = ClusterSingletonManagerSettings(system).withSingletonName("statusKeeper"))
   val statusKeeperSingleton = system.actorOf(props, name = "singleton")
 }
