@@ -8,7 +8,7 @@ object Common {
 
 
   val settings =
-    scalariformSettings ++ List(
+    List(
       // Core settings
       organization := "otrebski",
       version := "1.0.2",
