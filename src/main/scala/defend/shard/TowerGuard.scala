@@ -43,12 +43,12 @@ class TowerGuard(statusKeeper: ActorRef, reloadTime: FiniteDuration) extends Act
 
   private def supervised(props: Props) = {
     BackoffSupervisor.props(
-    BackoffOpts.onFailure(
-      childProps   = props,
-      childName    = "backedOffActor",
-      minBackoff   = 1 second,
-      maxBackoff   = 3 minutes,
-      randomFactor = 0.4))
+      BackoffOpts.onFailure(
+        childProps   = props,
+        childName    = "backedOffActor",
+        minBackoff   = 1 second,
+        maxBackoff   = 3 minutes,
+        randomFactor = 0.4))
   }
 }
 

@@ -124,12 +124,7 @@ class TowerActorTest extends TestKit(ActorSystem("defend", ConfigFactory.load("a
 
   }
 
-  override protected def beforeAll(): Unit = {
-    super.beforeAll()
-  }
-
   override protected def afterAll(): Unit = {
-    super.afterAll()
     val terminate: Future[Terminated] = system.terminate()
     Await.result(terminate, 5 seconds)
   }
