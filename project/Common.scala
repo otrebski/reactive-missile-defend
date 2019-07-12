@@ -8,7 +8,7 @@ object Common {
 
 
   val settings =
-    scalariformSettings ++ List(
+    List(
       // Core settings
       organization := "otrebski",
       version := "1.0.2",
@@ -18,12 +18,12 @@ object Common {
         "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven",
         "Sonatype OSS Releases" at "http://oss.sonatype.org/content/repositories/releases/",
         "Otros at bintray" at "https://bintray.com/artifact/download/otros-systems/maven"
-),
+      ),
       scalacOptions ++= List(
         "-unchecked",
         "-deprecation",
         "-language:_",
-        "-target:jvm-1.6",
+        "-target:jvm-1.8",
         "-encoding", "UTF-8"
       ),
       unmanagedSourceDirectories in Compile := List((scalaSource in Compile).value),
@@ -34,6 +34,6 @@ object Common {
         .setPreference(AlignParameters, true)
         .setPreference(AlignSingleLineCaseStatements, true)
         .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 100)
-        .setPreference(DoubleIndentClassDeclaration, true)
+        .setPreference(DoubleIndentMethodDeclaration, true)
     )
 }

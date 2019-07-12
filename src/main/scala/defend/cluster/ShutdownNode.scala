@@ -3,7 +3,7 @@ package defend.cluster
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.sharding.ShardRegion
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 import scala.language.postfixOps
 

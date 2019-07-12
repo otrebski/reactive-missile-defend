@@ -2,7 +2,7 @@ package defend.cluster
 
 import akka.actor.ActorSystem
 import akka.cluster.singleton.{ ClusterSingletonProxy, ClusterSingletonProxySettings }
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 trait StatusKeeperProxy {
 
@@ -15,8 +15,6 @@ trait StatusKeeperProxy {
   lazy val statusKeeperProxy = system.actorOf(
     ClusterSingletonProxy.props(
       singletonManagerPath = "/user/singleton",
-      settings             = settings
-    ),
-    name = "statusKeeperProxy"
-  )
+      settings             = settings),
+    name = "statusKeeperProxy")
 }

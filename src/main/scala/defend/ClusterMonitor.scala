@@ -2,7 +2,7 @@ package defend
 
 import akka.actor.Actor
 import akka.cluster.ClusterEvent._
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 class ClusterMonitor extends Actor {
   override def receive: Receive = {

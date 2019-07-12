@@ -15,7 +15,7 @@ class EnemyGenerator(started: Long, timeProvider: () => Long, waveGenerator: Wav
 
 object EnemyGenerator {
 
-  def props(started: Long, timeProvider: () => Long = System.currentTimeMillis, waveGenerator: WaveGenerator): Props = {
+  def props(started: Long, timeProvider: () => Long = () => System.currentTimeMillis, waveGenerator: WaveGenerator): Props = {
     Props(new EnemyGenerator(started, timeProvider, waveGenerator))
   }
 
@@ -24,7 +24,6 @@ object EnemyGenerator {
     city:         List[City]                        = List.empty,
     alienWeapons: List[WeaponInAction[AlienWeapon]] = List.empty,
     humanWeapons: List[WeaponInAction[HumanWeapon]] = List.empty,
-    landScape:    LandScape
-  )
+    landScape:    LandScape)
 
 }

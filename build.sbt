@@ -19,6 +19,8 @@ assemblyJarName := "reactive_missile_defend.jar"
 
 //fat jar -end
 
+parallelExecution in ThisBuild := false
+
 Common.settings
 
 libraryDependencies ++= Dependencies.missileDefend

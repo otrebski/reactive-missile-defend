@@ -19,37 +19,31 @@ class StatusKeeperTest extends TestKit(ActorSystem("defend", ConfigFactory.load(
     alienWeapons = List.empty,
     humanWeapons = List.empty,
     landscape,
-    List.empty
-  )
+    List.empty)
 
   val alienWeapons = List(
     WeaponInAction(AlienBomb(10, 10), Position(400, 200), MoveVector(Math.PI / 2, 1)),
     WeaponInAction(AlienNuke(100, 10), Position(350, 430), MoveVector(Math.PI / 2, 1)),
     WeaponInAction(AlienMissile(100, 10), Position(610, 60), MoveVector(Math.PI * 1.25, 1)),
-    WeaponInAction(AlienEmp(100, 10), Position(150, 350), MoveVector(Math.PI * 0.25, 2))
-  )
+    WeaponInAction(AlienEmp(100, 10), Position(150, 350), MoveVector(Math.PI * 0.25, 2)))
 
   val humanWeapons1 = List(
     WeaponInAction(HumanMissile("1", 10, 20), Position(200, 400), MoveVector(Math.PI * -0.5, 6)),
-    WeaponInAction(HumanMissile("2", 10, 20), Position(220, 400), MoveVector(Math.PI * -0.5, 8))
-  )
+    WeaponInAction(HumanMissile("2", 10, 20), Position(220, 400), MoveVector(Math.PI * -0.5, 8)))
 
   val humanWeapons2 = List(
     WeaponInAction(HumanMissile("3", 10, 20), Position(240, 400), MoveVector(Math.PI * -0.5, 10)),
-    WeaponInAction(HumanMissile("4", 10, 20), Position(260, 400), MoveVector(Math.PI * -0.5, 12))
-  )
+    WeaponInAction(HumanMissile("4", 10, 20), Position(260, 400), MoveVector(Math.PI * -0.5, 12)))
 
   val cities = List(
     City("a", Position(1, 2), 0),
     City("b", Position(1, 2), 0),
-    City("c", Position(1, 2), 0)
-  )
+    City("c", Position(1, 2), 0))
 
   val defence = List(
     DefenceTower("A", Position(1, 1)),
     DefenceTower("B", Position(2, 1)),
-    DefenceTower("C", Position(3, 1))
-  )
+    DefenceTower("C", Position(3, 1)))
 
   var underTest: ActorRef = _
   var probe: TestProbe = _
@@ -67,8 +61,7 @@ class StatusKeeperTest extends TestKit(ActorSystem("defend", ConfigFactory.load(
       case s: WarTheater => s shouldBe emptyWarTheater.copy(
         timestamp     = s.timestamp,
         clusterLeader = Some("akka.tcp://defend@localhost:12500"),
-        statusKeeper  = s.statusKeeper
-      )
+        statusKeeper  = s.statusKeeper)
     }
   }
 
@@ -155,7 +148,6 @@ class StatusKeeperTest extends TestKit(ActorSystem("defend", ConfigFactory.load(
   }
 
   override protected def afterAll(): Unit = {
-    super.afterAll()
     val terminate: Future[Terminated] = system.terminate()
     implicit val ec = scala.concurrent.ExecutionContext.global
     Await.result(terminate, 10 seconds)

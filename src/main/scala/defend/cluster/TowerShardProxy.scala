@@ -14,8 +14,7 @@ trait TowerShardProxy {
       typeName        = TowerGuard.shardRegion,
       role            = Some(Roles.Tower),
       extractEntityId = TowerGuard.extractEntityId,
-      extractShardId  = TowerGuard.extractShardId
-    )
+      extractShardId  = TowerGuard.extractShardId)
   }
 
 }

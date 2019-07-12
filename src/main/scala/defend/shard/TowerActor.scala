@@ -14,9 +14,10 @@ import defend.shard.FsmProtocol.{ AddExperience, DomainEvent, ScheduledStateChan
 import defend.shard.TowerActor.Protocol.{ MessageOfDeath, Ping, Reloaded, Situation }
 import defend.ui.StatusKeeper
 import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
 import scala.reflect.ClassTag
@@ -40,8 +41,7 @@ case class TowerFsMData(
   me:                     Option[DefenceTower],
   experience:             Int                  = 0,
   lastMessageId:          Int                  = 0,
-  scheduledStateChangeAt: Option[Long]         = None
-)
+  scheduledStateChangeAt: Option[Long]         = None)
 
 object FsmProtocol {
 
@@ -56,17 +56,17 @@ object FsmProtocol {
 }
 
 class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuration)(implicit val domainEventClassTag: ClassTag[FsmProtocol.DomainEvent])
-    extends PersistentFSM[TowerFsmState, TowerFsMData, FsmProtocol.DomainEvent]
-    with DiagnosticActorLogging {
+  extends PersistentFSM[TowerFsmState, TowerFsMData, FsmProtocol.DomainEvent]
+  with DiagnosticActorLogging {
 
   override val log = akka.event.Logging(this)
   val nextLevelReduction = 0.05
-  val commandCenterName = Cluster(context.system).selfAddress.toString
+  val commandCenterName: String = Cluster(context.system).selfAddress.toString
   private val timeFormat = new SimpleDateFormat("HH:mm:ss")
   private val created = System.currentTimeMillis()
 
   @throws[Exception](classOf[Exception]) override def preStart(): Unit = {
-    log.setMDC(mdc(()))
+    log.setMDC(mdc(()).asJava)
     log.warning("Starting {} on {}", persistenceId, commandCenterName)
     println(s"Starting $persistenceId on $commandCenterName".white.onBlue)
     super.preStart()
@@ -74,7 +74,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
   }
 
   override def onRecoveryCompleted(): Unit = {
-    log.setMDC(mdc(()))
+    log.setMDC(mdc(()).asJava)
     val recoveryTime: Long = System.currentTimeMillis() - created
     log.warning("Recovery completed for {} on {} in {}ms", persistenceId, commandCenterName, recoveryTime)
     println(s"Recovery completed for $persistenceId on $commandCenterName ${recoveryTime}ms".white.onBlue)
@@ -85,7 +85,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
 
   override protected def onRecoveryFailure(cause: Throwable, event: Option[Any]): Unit = {
     super.onRecoveryFailure(cause, event)
-    log.setMDC(mdc(()))
+    log.setMDC(mdc(()).asJava)
     println(s"Recovery failed for $persistenceId on $commandCenterName: ${cause.getMessage}".red)
     log.error(cause, s"Recovery failed for $persistenceId on $commandCenterName on event $event")
     log.clearMDC()
@@ -106,7 +106,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
       currentData.copy(scheduledStateChangeAt = at)
     case UpdateSelf(index, me) =>
       log.info("Updating self to {}", me)
-      currentData.copy(me = me, lastMessageId = index)
+      currentData.copy(me            = me, lastMessageId = index)
   }
 
   startWith(FsmReady, TowerFsMData(None, 0, 0, None))
@@ -191,7 +191,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
   onTransition {
     case FsmReady -> FsmReloading =>
       log.debug("Going to -> Reloading")
-      implicit val ec = scala.concurrent.ExecutionContext.global
+      implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
       context.system.scheduler.scheduleOnce(reloadTime, self, Reloaded)
       stateData.me.foreach(d =>
         statusKeeper ! DefenceTowerStatus(d, isUp = true, defenceTowerState = DefenceTowerReloading, commandCenterName = Some(commandCenterName), level = experienceToLevel(stateData.experience)))
@@ -208,7 +208,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
   }
 
   override def postStop(): Unit = {
-    log.setMDC(mdc(()))
+    log.setMDC(mdc(()).asJava)
     log.warning("Stopping {} on {}", persistenceId, commandCenterName)
     println(s"Stopping $persistenceId on $commandCenterName".white.onBlue)
     super.postStop()

@@ -42,8 +42,7 @@ case class DefenceTowerStatus(
   isUp:                 Boolean,
   commandCenterName:    Option[String]    = None,
   level:                Int               = 0,
-  lastMessageTimestamp: Option[Long]      = None
-)
+  lastMessageTimestamp: Option[Long]      = None)
 
 sealed trait DefenceTowerState
 
@@ -92,9 +91,7 @@ case class WarTheater(
   persistenceState: PersistenceState                  = PersistenceUnknown(),
   lostMessages:     List[LostMessages]                = List.empty[LostMessages],
   recoveryTime:     Map[String, Long]                 = Map.empty[String, Long],
-  statusKeeper:     Option[String]                    = None
-
-)
+  statusKeeper:     Option[String]                    = None)
 
 case class OptionalWarTheater(
   defence:        Option[List[DefenceTower]]                = None,
@@ -105,8 +102,7 @@ case class OptionalWarTheater(
   explosions:     Option[List[Explosion]]                   = None,
   points:         Option[Integer]                           = None,
   landScape:      Option[LandScape]                         = None,
-  clusterLeader:  Option[String]                            = None
-)
+  clusterLeader:  Option[String]                            = None)
 
 case object Direction {
   val Left = Math.PI

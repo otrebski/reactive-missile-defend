@@ -32,31 +32,31 @@ class FileUi(val file: String) extends Actor with DiagnosticActorLogging {
   override def preStart(): Unit = {
     context.system.scheduler.scheduleOnce(1 second, self, StatusKeeper.Protocol.UpdateRequest)
     Cluster(context.system).subscribe(self, ClusterEvent.initialStateAsEvents,
-      classOf[MemberUp],
-      classOf[MemberRemoved],
-      classOf[UnreachableMember],
-      classOf[ReachableMember])
+                                      classOf[MemberUp],
+                                      classOf[MemberRemoved],
+                                      classOf[UnreachableMember],
+                                      classOf[ReachableMember])
   }
 
   override def receive: Receive = {
     case m: MemberUp if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
       update()
     case m: MemberRemoved if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOffline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOffline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOffline))
       update()
     case m: UnreachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterUnreachable, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterUnreachable, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterUnreachable))
       update()
     case m: ReachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
       update()
   }

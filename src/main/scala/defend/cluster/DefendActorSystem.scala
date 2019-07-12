@@ -3,7 +3,7 @@ package defend.cluster
 import akka.actor.ActorSystem
 import akka.cluster.Cluster
 import com.typesafe.config.{ Config, ConfigFactory }
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 import scala.concurrent.duration._
 trait DefendActorSystem {

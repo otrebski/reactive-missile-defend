@@ -5,13 +5,12 @@ import java.util.Date
 import javax.swing.BorderFactory
 
 import akka.actor._
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import defend.PersistenceMonitor
 import defend.cluster._
 import defend.game._
 import defend.model._
 import defend.ui.JWarTheater.CommandCenterPopupAction
-import net.ceedubs.ficus.Ficus._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ ExecutionContext, Future }
@@ -20,16 +19,16 @@ import scala.swing._
 import scala.swing.event.{ ButtonClicked, ValueChanged }
 
 object UiApp extends SimpleSwingApplication
-    with DefendActorSystem
-    with StatusKeeperSingleton
-    with StatusKeeperProxy
-    with TowerShardProxy {
+  with DefendActorSystem
+  with StatusKeeperSingleton
+  with StatusKeeperProxy
+  with TowerShardProxy {
 
-  import pl.project13.scala.rainbow.Rainbow._
+  import pl.project13.scala.rainbow._
 
   println("Starting".green)
 
-  system.actorOf(Props(new PersistenceMonitor(statusKeeperProxy, System.currentTimeMillis)))
+  system.actorOf(Props(new PersistenceMonitor(statusKeeperProxy, () => System.currentTimeMillis)))
   val manualShotDamageSlider = new scala.swing.Slider() {
     orientation = Orientation.Horizontal
     max = 100
@@ -42,7 +41,8 @@ object UiApp extends SimpleSwingApplication
     snapToTicks = true
     border = BorderFactory.createTitledBorder("Manual shoot damage")
   }
-  private val duration: Long = config.as[FiniteDuration]("akka.cluster.auto-down-unreachable-after").toMillis
+  private val duration: Long = config.getDuration("akka.cluster.auto-down-unreachable-after").toMillis
+  //
   private val emptyWarTheater: WarTheater = WarTheater(List.empty, List.empty, List.empty, List.empty, LandScape(500, 500, 120), List.empty)
   private var gameEngine: Option[ActorRef] = None
   private val dragFunction = new ((DragEvent) => Unit) {
@@ -77,10 +77,10 @@ object UiApp extends SimpleSwingApplication
   })
 
   private val jWarTheater: JWarTheater = new JWarTheater(emptyWarTheater, duration,
-    showGrid                 = false,
-    showTracks               = true,
-    dragListener             = Some(dragFunction),
-    commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0))
+                                                         showGrid                 = false,
+                                                         showTracks               = true,
+                                                         dragListener             = Some(dragFunction),
+                                                         commandCenterPopupAction = List(terminateActorSystem, leaveCluster, systemExit0))
 
   private val uiUpdater = system.actorOf(UiUpdater.props(jWarTheater, statusKeeperProxy), "uiUpdater")
 
@@ -106,8 +106,7 @@ object UiApp extends SimpleSwingApplication
       LayoutHigh,
       LayoutTest,
       LayoutTest_2,
-      LayoutNarrow
-    ))
+      LayoutNarrow))
     private val attackMode = new ComboBox[String](List("Random 5s", "Random 7s", "Random 10s", "Top drop", "Intelligent wave", "Text wave", "Test"))
     private val showGrid = new CheckBox("Show grid")
     showGrid.selected = jWarTheater.showGrid
@@ -150,16 +149,13 @@ object UiApp extends SimpleSwingApplication
           case "High defence" => generateCityAndDefence(landScape.width, landScape.groundLevel, 20, 6, towerNamePrefix)
           case LayoutTest => (
             List(City("A", Position(300, landScape.groundLevel), 100)),
-            List(200, 400, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
-          )
+            List(200, 400, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
           case LayoutTest_2 => (
             List(City("A", Position(350, landScape.groundLevel), 100)),
-            List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
-          )
+            List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
           case LayoutNarrow => (
             List(City("A", Position(110, landScape.groundLevel), 100)),
-            List(20, 50, 80, 140, 170).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel)))
-          )
+            List(20, 50, 80, 140, 170).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
         }
         val waveGenerator = attackMode.selection.item match {
           case "Random 5s"        => new StandardRandomWaveGenerator(quietPeriod = 5000)
@@ -263,7 +259,7 @@ object UiApp extends SimpleSwingApplication
       Future {
         (0 until 10).reverse.foreach { i =>
           Thread.sleep(1000)
-          Swing.onEDT(statusLabel.text = s"Restart int ${i}s")
+          Swing.onEDT(statusLabel.text= s"Restart int ${i}s")
         }
         Swing.onEDT(restartIfOver())
       }

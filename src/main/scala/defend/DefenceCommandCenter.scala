@@ -5,16 +5,16 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.{ ClusterDomainEvent, InitialStateAsEvents }
 import defend.cluster._
 import defend.ui.FileUi
-import pl.project13.scala.rainbow.Rainbow._
+import pl.project13.scala.rainbow._
 
 object DefenceCommandCenter extends App
-    with Roles.CommandCenterRole
-    with DefendActorSystem
-    //    with StatusKeeperSingleton
-    with StatusKeeperProxy
-    with TowerShard
-    with ShutdownNode
-    with Terminal {
+  with Roles.CommandCenterRole
+  with DefendActorSystem
+  //    with StatusKeeperSingleton
+  with StatusKeeperProxy
+  with TowerShard
+  with ShutdownNode
+  with Terminal {
 
   //  system.actorOf(Props[SharedJournalSetter])
 

@@ -11,8 +11,7 @@ object Boot extends App {
         | cliui - command line UI
         | sj - shared journal
         | cc - Command center -> node
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 
   args.toList match {
