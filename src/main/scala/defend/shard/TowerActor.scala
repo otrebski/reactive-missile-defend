@@ -193,8 +193,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
       log.debug("Going to -> Reloading")
       implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
       context.system.scheduler.scheduleOnce(reloadTime, self, Reloaded)
-      stateData.me.foreach(d =>
-        statusKeeper ! DefenceTowerStatus(d, isUp = true, defenceTowerState = DefenceTowerReloading, commandCenterName = Some(commandCenterName), level = experienceToLevel(stateData.experience)))
+      stateData.me.foreach(d => statusKeeper ! DefenceTowerStatus(d, isUp = true, defenceTowerState = DefenceTowerReloading, commandCenterName = Some(commandCenterName), level = experienceToLevel(stateData.experience)))
     case _ -> FsmReady =>
       log.debug("Going to -> Ready")
       stateData.me.foreach(d => statusKeeper ! DefenceTowerStatus(d, isUp = true, defenceTowerState = DefenceTowerReady, commandCenterName = Some(commandCenterName), level = experienceToLevel(stateData.experience)))
@@ -225,15 +224,17 @@ object TowerActor {
 
   object Protocol {
 
-    case object Reloaded
+    sealed trait ActorMsg
 
-    case object Ping
+    case object Reloaded extends ActorMsg
 
-    case class ExperienceGained(exp: Int)
+    case object Ping extends ActorMsg
 
-    case class Situation(index: Int, me: DefenceTower, target: List[WeaponInAction[AlienWeapon]], landScape: LandScape)
+    case class ExperienceGained(exp: Int) extends ActorMsg
 
-    case class MessageOfDeath(alienEmp: AlienEmp, secondsToCure: Int = 4)
+    case class Situation(index: Int, me: DefenceTower, target: List[WeaponInAction[AlienWeapon]], landScape: LandScape) extends ActorMsg
+
+    case class MessageOfDeath(alienEmp: AlienEmp, secondsToCure: Int = 4) extends ActorMsg
 
   }
 

@@ -11,6 +11,7 @@ object Version {
   val swing = "2.1.1"
   val otrosSocket = "1.0"
   val scalaLogging = "2.1.2"
+  val cats = "1.6.1"
 }
 
 object Library {
@@ -25,7 +26,7 @@ object Library {
   val scalaLogging ="com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
   val scalaSwing = "org.scala-lang.modules" % "scala-swing_2.12" % Version.swing
   val logbackClassic = "ch.qos.logback" % "logback-classic" % Version.logback
-
+  val cats = "org.typelevel" %% "cats-core" % Version.cats
   val scalaParsers = "org.scala-lang.modules" %% "scala-parser-combinators" % Version.scalaParsers
   val scalaTest = "org.scalatest" %% "scalatest" % Version.scalaTest
 //  val configFicus = "net.ceedubs" %% "ficus" % "1.1.2"
@@ -55,6 +56,7 @@ object Dependencies {
     akkaTestkit % "test",
     scalaTest % "test",
 //    levelDbjni % "test",
+    cats,
     leveldb ,
     inmmem,
     cassandra,

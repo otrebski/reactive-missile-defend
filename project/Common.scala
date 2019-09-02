@@ -24,7 +24,8 @@ object Common {
         "-deprecation",
         "-language:_",
         "-target:jvm-1.8",
-        "-encoding", "UTF-8"
+        "-encoding", "UTF-8",
+        "-Ypartial-unification"
       ),
       unmanagedSourceDirectories in Compile := List((scalaSource in Compile).value),
       unmanagedSourceDirectories in Test := List((scalaSource in Test).value),
