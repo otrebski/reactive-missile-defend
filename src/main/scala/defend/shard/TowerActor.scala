@@ -115,7 +115,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
     case Event(situation: Situation, data) =>
       log.info("Received situation {}", situation.index)
       val level = experienceToLevel(data.experience)
-      val speed: Double = 70 + level * 30 + Random.nextInt(30)
+      val speed: Double = 70 + level * 30
       val range: Double = rangeForLevel(experienceToLevel(data.experience))
       val s = situation
       val target: Option[WeaponInAction[AlienWeapon]] = findMissileToIntercept(s.target, s.landScape, s.me.position, speed, range)
@@ -129,7 +129,7 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
           }
           .foreach(sender() ! _)
         val reducedReloadTime: Double = reduceByLevel(reloadTime.toMillis, level, nextLevelReduction)
-        val reloadAt: Option[Long] = Some(System.currentTimeMillis() + (reducedReloadTime / 2 + Random.nextInt(reducedReloadTime.toInt / 2)).toLong)
+        val reloadAt: Option[Long] = Some(System.currentTimeMillis() + reducedReloadTime.toLong)
         goto(FsmReloading) applying ScheduledStateChangeAgUpdate(reloadAt)
       } else {
         if (data.me.contains(situation.me)) {
