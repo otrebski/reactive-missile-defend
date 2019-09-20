@@ -127,7 +127,10 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
             val directionError = angleErrorForLevel(level) * Random.nextDouble()
             r.copy(moveVector = r.moveVector.copy(direction = r.moveVector.direction + directionError).inAngleDegrees(5, 175))
           }
-          .foreach(sender() ! _)
+          .foreach { fired =>
+            println(s"Firing rocket $fired to ${sender()}")
+            sender() ! fired
+          }
         val reducedReloadTime: Double = reduceByLevel(reloadTime.toMillis, level, nextLevelReduction)
         val reloadAt: Option[Long] = Some(System.currentTimeMillis() + reducedReloadTime.toLong)
         goto(FsmReloading) applying ScheduledStateChangeAgUpdate(reloadAt)

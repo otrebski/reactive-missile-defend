@@ -152,7 +152,8 @@ object UiApp extends SimpleSwingApplication
             List(200, 400, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
           case LayoutTest_2 => (
             List(City("A", Position(350, landScape.groundLevel), 100)),
-            List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
+            List(300).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
+          //            List(100, 200, 300, 400, 500, 600).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
           case LayoutNarrow => (
             List(City("A", Position(110, landScape.groundLevel), 100)),
             List(20, 50, 80, 140, 170).map(x => DefenceTower(s"T$x-${System.currentTimeMillis() % 1000}", Position(x, landScape.groundLevel))))
@@ -164,11 +165,11 @@ object UiApp extends SimpleSwingApplication
           case "Top drop"         => new RainWaveGenerator()
           case "Intelligent wave" => new IntelligentWaveGenerator()
           case "Text wave"        => new AdWaveGenerator()
-          case _                  => new TestWaveGenerator(quietPeriod = 5000)
+          case _                  => new TestWaveGenerator(quietPeriod = 500000)
         }
         import scala.concurrent.duration._
         val delayDuration: FiniteDuration = FiniteDuration(delaySlider.value.toLong, scala.concurrent.duration.MILLISECONDS)
-        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f), delayDuration)))
+        gameEngine = Some(system.actorOf(GameEngine.props(defence, cities, landScape, waveGenerator, statusKeeperProxy, Some(f), delayDuration), "gameengine"))
         isOver = false
 
       case bc: ButtonClicked if bc.source == showGrid   => jWarTheater.showGrid = showGrid.selected

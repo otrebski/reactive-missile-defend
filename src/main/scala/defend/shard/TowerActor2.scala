@@ -1,24 +1,29 @@
 package defend.shard
 
 import java.time.LocalDateTime
-import java.time.{Duration => JDuration}
+import java.time.{ Duration => JDuration }
 
-import akka.actor.ActorRef
+import akka.actor.{ ActorRef, Props }
+import akka.cluster.Cluster
 import akka.persistence.PersistentActor
 import cats.data.State
-import defend.model.{AlienWeapon, DefenceTower, HumanWeapon, MoveVector, WeaponInAction}
+import defend.model.{ AlienWeapon, DefenceTower, DefenceTowerInfected, DefenceTowerReady, DefenceTowerReloading, HumanWeapon, MoveVector, WeaponInAction }
 import defend.shard.TowerActor.Protocol._
-import defend.shard.TowerLogic.TowerState
+import defend.shard.TowerLogic.{ FireRocket, SendKeepAlive, TowerReady, TowerReloading, TowerState }
 
-import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.duration.{ FiniteDuration, _ }
 import scala.language.postfixOps
 import cats.syntax.option._
+import defend.game.GameEngine
 import defend.game.GameEngine.Protocol
-import defend.{experienceToLevel, findMissileToIntercept, fireMissile, rangeForLevel}
+import defend.ui.StatusKeeper
+import defend.ui.StatusKeeper.Protocol.TowerKeepAlive
+import defend.{ experienceToLevel, findMissileToIntercept, fireMissile, rangeForLevel }
 
 class TowerActor2(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuration) extends PersistentActor {
 
-  var towerState = TowerState(None, 0, 0)
+  var towerState = TowerState(me = None)
+  val commandCenterName: String = Cluster(context.system).selfAddress.toString
 
   override def receiveRecover: Receive = {
     case msg: ActorMsg =>
@@ -29,11 +34,40 @@ class TowerActor2(name: String, statusKeeper: ActorRef, reloadTime: FiniteDurati
   override def receiveCommand: Receive = {
     case msg: ActorMsg =>
       val (newState, actions) = TowerLogic.process(msg, LocalDateTime.now()).run(towerState).value
+      if (towerState.towerCondition == TowerReloading && newState.towerCondition == TowerReady) {
+        println(s"Tower ${towerState.me} reloaded")
+      }
+      if (towerState.towerCondition == TowerReady && newState.towerCondition == TowerReloading) {
+        println(s"Tower ${towerState.me} is reloading")
+      }
+
       towerState = newState
-      actions foreach println
+      actions.foreach {
+        case SendKeepAlive =>
+          val defenceTowerState = towerState.towerCondition match {
+            case TowerLogic.TowerReady     => DefenceTowerReady
+            case TowerLogic.TowerReloading => DefenceTowerReloading
+            case TowerLogic.TowerInfected  => DefenceTowerInfected
+          }
+          val keepAlive: TowerKeepAlive = StatusKeeper.Protocol.TowerKeepAlive(
+            id                = name,
+            commandCenterName = commandCenterName,
+            towerState        = defenceTowerState,
+            level             = experienceToLevel(towerState.experience))
+          statusKeeper ! keepAlive
+
+        case FireRocket(humanWeapon, moveVector, defenceTower, explodingVelocity) =>
+          sender() ! GameEngine.Protocol.RocketFired(humanWeapon, moveVector, defenceTower, explodingVelocity)
+      }
   }
 
   override def persistenceId: String = name
+}
+
+object TowerActor2 {
+  def props(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuration = 2 seconds): Props =
+    Props(new TowerActor2(name, statusKeeper, reloadTime))
+
 }
 
 object TowerLogic {
@@ -46,12 +80,13 @@ object TowerLogic {
 
   case object TowerReloading extends TowerCondition
 
-  case class TowerState(me: Option[DefenceTower],
-                        experience: Int = 0,
-                        lastMessageId: Int = 0,
-                        reloadTime: FiniteDuration = 100 millis,
-                        scheduledStateChangeAt: Option[LocalDateTime] = None,
-                        towerCondition: TowerCondition = TowerReady)
+  case class TowerState(
+    me:                     Option[DefenceTower],
+    experience:             Int                   = 0,
+    lastMessageId:          Int                   = 0,
+    reloadTime:             FiniteDuration        = 1 second,
+    scheduledStateChangeAt: Option[LocalDateTime] = None,
+    towerCondition:         TowerCondition        = TowerReady)
 
   sealed trait ActionResult
 
@@ -59,12 +94,11 @@ object TowerLogic {
 
   case class FireRocket(humanWeapon: HumanWeapon, moveVector: MoveVector, defenceTower: DefenceTower, explodingVelocity: Option[Double]) extends ActionResult
 
-  case object NotifyStatusKeeper extends ActionResult
-
+  //  case object NotifyStatusKeeper extends ActionResult
 
   type TowerSm = State[TowerState, List[ActionResult]]
 
-  def fire(s: Situation, now: LocalDateTime) = State[TowerState, Option[FireRocket]] { state =>
+  private def fire(s: Situation, now: LocalDateTime) = State[TowerState, Option[FireRocket]] { state =>
     val level = experienceToLevel(state.experience)
     val speed: Double = 70 + level * 30
     val range: Double = rangeForLevel(experienceToLevel(state.experience))
@@ -80,29 +114,25 @@ object TowerLogic {
         (
           //Schedule reload
           state.copy(
-            me = s.me.some,
-            towerCondition = TowerReloading,
-            scheduledStateChangeAt = now.plus(JDuration.ofMillis(state.reloadTime.toMillis)).some
-          ),
+            me                     = s.me.some,
+            towerCondition         = TowerReloading,
+            scheduledStateChangeAt = now.plus(JDuration.ofMillis(state.reloadTime.toMillis)).some),
           Some(
             FireRocket(
-              humanWeapon = missile.humanWeapon,
-              moveVector = missile.moveVector,
-              defenceTower = missile.defenceTower,
-              explodingVelocity = missile.explodingVelocity
-            )
-          ))
+              humanWeapon       = missile.humanWeapon,
+              moveVector        = missile.moveVector,
+              defenceTower      = missile.defenceTower,
+              explodingVelocity = missile.explodingVelocity)))
       case None => (state.copy(me = s.me.some), none[FireRocket])
     }
   }
 
-  val ping = State[TowerState, List[ActionResult]](state => (state, List(SendKeepAlive)))
+  private val ping = State[TowerState, List[ActionResult]](state => (state, List(SendKeepAlive)))
 
-  def updateSelfOnSituation(s: Situation) = State[TowerState, List[ActionResult]](state =>
-    (state.copy(me = s.me.some, lastMessageId = s.index), List.empty)
-  )
+  private def updateSelfOnSituation(s: Situation) = State[TowerState, List[ActionResult]](state =>
+    (state.copy(me            = s.me.some, lastMessageId = s.index), List.empty))
 
-  val noAction = State[TowerState, List[ActionResult]](state => (state, List.empty))
+  private val noAction = State[TowerState, List[ActionResult]](state => (state, List.empty))
 
   def process(msg: ActorMsg, now: LocalDateTime): TowerSm = State[TowerState, List[ActionResult]] { state =>
     val p = msg match {
@@ -112,7 +142,7 @@ object TowerLogic {
         State.set(newState).map(_ => List.empty[ActionResult])
       case MessageOfDeath(_, secondsToCure) =>
         val changeAt = LocalDateTime.now().plus(JDuration.ofSeconds(secondsToCure))
-        val newState = state.copy(scheduledStateChangeAt = Some(changeAt))
+        val newState = state.copy(towerCondition         = TowerInfected, scheduledStateChangeAt = Some(changeAt))
         (newState, List.empty[ActionResult])
         State.set(newState).map(_ => List.empty[ActionResult])
       case _ =>
@@ -124,11 +154,21 @@ object TowerLogic {
                   _ <- updateSelfOnSituation(situation)
                   maybeFire <- fire(situation, now)
                 } yield maybeFire.toList
+              case _ => noAction
             }
           case TowerReloading =>
-            noAction
+            if (state.scheduledStateChangeAt.exists(_.isBefore(now))) {
+              State.set(state.copy(towerCondition         = TowerReady, scheduledStateChangeAt = None)).map(_ => List.empty)
+            } else {
+              noAction
+            }
           case TowerInfected =>
-            noAction
+            if (state.scheduledStateChangeAt.exists(_.isBefore(now))) {
+              State.set(state.copy(towerCondition         = TowerReady, scheduledStateChangeAt = None)).map(_ => List.empty)
+            } else {
+              noAction
+            }
+
         }
     }
     p.run(state).value

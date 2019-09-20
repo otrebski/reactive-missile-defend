@@ -163,6 +163,7 @@ class GameEngine(
         gameOverCallback.foreach(_.apply())
       }
     case UpdateDelayTime(delay) => delayTime = delay
+    case a: Any                 => println(s"Unknown message: $a")
   }
 
   implicit def weaponInActionToExplosion(weaponInAction: WeaponInAction[Weapon]): Explosion = {
