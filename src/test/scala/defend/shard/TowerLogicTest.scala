@@ -2,19 +2,19 @@ package defend.shard
 
 import java.time.LocalDateTime
 
-import defend.model.{ AlienBomb, AlienEmp, DefenceTower, LandScape, MoveVector, Position, WeaponInAction }
-import defend.shard.TowerActor.Protocol.{ ExperienceGained, MessageOfDeath, Ping, Situation }
-import defend.shard.TowerLogic.{ FireRocket, SendKeepAlive, TowerInfected, TowerReady, TowerReloading, TowerState }
-import org.scalatest.{ Matchers, WordSpec }
+import defend.model.{AlienBomb, AlienEmp, DefenceTower, DefenceTowerReloading, DefenceTowerStatus, LandScape, MoveVector, Position, WeaponInAction}
+import defend.shard.TowerActor.Protocol.{ExperienceGained, MessageOfDeath, Ping, Situation}
+import defend.shard.TowerLogic.{FireRocket, SendKeepAlive, SendTowerStatus, TowerInfected, TowerReady, TowerReloading, TowerState}
+import org.scalatest.{Matchers, WordSpec}
 
 class TowerLogicTest extends WordSpec with Matchers {
 
   val initialState = TowerState(me = None)
   val me: DefenceTower = DefenceTower("a", Position(50, 50))
   val situation = Situation(
-    index     = 1,
-    me        = me,
-    target    = List.empty,
+    index = 1,
+    me = me,
+    target = List.empty,
     landScape = LandScape(100, 100, 50))
 
   private val now = LocalDateTime.now()
@@ -45,37 +45,37 @@ class TowerLogicTest extends WordSpec with Matchers {
           defenceTower.name shouldBe me.name
         case _ => fail("Rocket not fired")
       }
-
-      fail("should have notify statusKeeper DefenceTowerStatus")
-
+      print(actions)
+      actions should contain(SendTowerStatus(me, TowerReloading))
     }
-    "dont fire if reloading" in {
+    "don't fire if reloading" in {
       val weaponInAction = WeaponInAction(AlienBomb(10, 10), Position(50, 70), MoveVector(Math.PI, 1))
       val situationUnderAttack = situation.copy(target = List(weaponInAction))
       val (newState, actions) = TowerLogic.process(situationUnderAttack, now).run(initialState.copy(towerCondition = TowerReloading)).value
       newState.towerCondition shouldBe TowerReloading
       actions shouldBe 'empty
     }
-    "dont fire if there is no target" in {
+    "don't fire if there is no target" in {
       val (newState, actions) = TowerLogic.process(situation, now).run(initialState).value
       newState.towerCondition shouldBe TowerReady
       actions shouldBe 'empty
     }
 
     "change to ready when reloaded" in {
-      val state = initialState.copy(towerCondition         = TowerReloading, scheduledStateChangeAt = Some(LocalDateTime.MIN))
+      val state = initialState.copy(towerCondition = TowerReloading, scheduledStateChangeAt = Some(LocalDateTime.MIN))
       val (newState, actions) = TowerLogic.process(situation, now).run(state).value
       newState.towerCondition shouldBe TowerReady
-      actions shouldBe 'empty
+      actions should contain(SendTowerStatus(me, TowerReady))
     }
     "heal infected after sick duration" in {
-      val state = initialState.copy(towerCondition         = TowerInfected, scheduledStateChangeAt = Some(LocalDateTime.MIN))
+      val state = initialState.copy(towerCondition = TowerInfected, scheduledStateChangeAt = Some(LocalDateTime.MIN))
       val (newState, actions) = TowerLogic.process(situation, now).run(state).value
       newState.towerCondition shouldBe TowerReady
-      actions shouldBe 'empty
+      //      actions shouldBe 'empty
+      actions should contain(SendTowerStatus(me, TowerReady))
     }
 
-    "send keepalive on ping" in {
+    "send keep alive on ping" in {
       val (newState, actions) = TowerLogic.process(Ping, now).run(initialState).value
       newState shouldBe initialState
       actions shouldBe List(SendKeepAlive)
@@ -85,7 +85,7 @@ class TowerLogicTest extends WordSpec with Matchers {
       val (newState, actions) = TowerLogic.process(MessageOfDeath(AlienEmp(100, 100)), now).run(initialState).value
       newState.towerCondition shouldBe TowerInfected
       newState.scheduledStateChangeAt shouldBe defined
-      actions shouldBe 'empty
+      actions should contain(SendTowerStatus(me, TowerInfected))
     }
   }
 }

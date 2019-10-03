@@ -67,7 +67,6 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
 
     case m: TowerKeepAlive =>
       log.info("Received keepAlive from {}: {}", m.id, m)
-      println(s"Received keepAlive from ${m.id}: ${m}. statuses: ${commandCenters.get(m.id)}")
 
       towersLastKeepAlive = towersLastKeepAlive.updated(m.id, timeProvider())
       defenceTowersStatus.get(m.id)
@@ -81,20 +80,20 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
       commandCenters.get(m.commandCenterName).foreach(cc => commandCenters = commandCenters.updated(m.commandCenterName, cc.copy(lastMessageTimestamp = timeProvider())))
     case m: MemberUp if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
     case m: MemberRemoved if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOffline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOffline))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOffline))
     case m: UnreachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterUnreachable, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterUnreachable))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterUnreachable))
 
     case m: ReachableMember if m.member.hasRole(Roles.Tower) =>
       val address: String = m.member.address.toString
-      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline, lastMessageTimestamp = 0))
+      val cc: CommandCenter = commandCenters.getOrElse(address, CommandCenter(name                 = address, status = CommandCenterOnline))
       commandCenters = commandCenters.updated(address, cc.copy(status = CommandCenterOnline))
 
     case p: PersistenceState => persistenceState = p
@@ -169,16 +168,14 @@ class StatusKeeper(timeProvider: () => Long) extends Actor with DiagnosticActorL
     x => timeProvider() - x._2 < explosionsDuration
   }
 
-  val lostMessagesFilter: (LostMessages) => Boolean = {
+  val lostMessagesFilter: LostMessages => Boolean = {
     x => timeProvider() - x.timestamp < lostMessagesDuration
   }
 }
 
 object StatusKeeper {
 
-  val defaultTimeProvider = new (() => Long) {
-    override def apply(): Long = System.currentTimeMillis()
-  }
+  val defaultTimeProvider: () => Long = () => System.currentTimeMillis()
 
   def props(timeProvider: () => Long = defaultTimeProvider): Props = Props(classOf[StatusKeeper], timeProvider)
 

@@ -128,7 +128,6 @@ class TowerActor(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuratio
             r.copy(moveVector = r.moveVector.copy(direction = r.moveVector.direction + directionError).inAngleDegrees(5, 175))
           }
           .foreach { fired =>
-            println(s"Firing rocket $fired to ${sender()}")
             sender() ! fired
           }
         val reducedReloadTime: Double = reduceByLevel(reloadTime.toMillis, level, nextLevelReduction)

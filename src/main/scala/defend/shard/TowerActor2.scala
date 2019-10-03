@@ -5,7 +5,7 @@ import java.time.{ Duration => JDuration }
 
 import akka.actor.{ ActorRef, Props }
 import akka.cluster.Cluster
-import akka.persistence.PersistentActor
+import akka.persistence.{ PersistentActor, RecoveryCompleted }
 import cats.data.State
 import defend.model.{ AlienWeapon, DefenceTower, DefenceTowerInfected, DefenceTowerReady, DefenceTowerReloading, HumanWeapon, MoveVector, WeaponInAction }
 import defend.shard.TowerActor.Protocol._
@@ -22,6 +22,7 @@ import defend.{ experienceToLevel, findMissileToIntercept, fireMissile, rangeFor
 
 class TowerActor2(name: String, statusKeeper: ActorRef, reloadTime: FiniteDuration) extends PersistentActor {
 
+  val created: Long = System.currentTimeMillis()
   var towerState = TowerState(me = None)
   val commandCenterName: String = Cluster(context.system).selfAddress.toString
 
@@ -29,6 +30,9 @@ class TowerActor2(name: String, statusKeeper: ActorRef, reloadTime: FiniteDurati
     case msg: ActorMsg =>
       val (newState, _) = TowerLogic.process(msg, LocalDateTime.now()).run(towerState).value
       towerState = newState
+    case RecoveryCompleted =>
+      val recoveryTime: Long = System.currentTimeMillis() - created
+      statusKeeper ! StatusKeeper.Protocol.RecoveryReport(persistenceId, recoveryTime, success = true)
   }
 
   override def receiveCommand: Receive = {
@@ -94,7 +98,7 @@ object TowerLogic {
 
   case class FireRocket(humanWeapon: HumanWeapon, moveVector: MoveVector, defenceTower: DefenceTower, explodingVelocity: Option[Double]) extends ActionResult
 
-  //  case object NotifyStatusKeeper extends ActionResult
+  case class SendTowerStatus(defenceTower: DefenceTower, towerCondition: TowerCondition) extends ActionResult
 
   type TowerSm = State[TowerState, List[ActionResult]]
 
@@ -144,7 +148,7 @@ object TowerLogic {
         val changeAt = LocalDateTime.now().plus(JDuration.ofSeconds(secondsToCure))
         val newState = state.copy(towerCondition         = TowerInfected, scheduledStateChangeAt = Some(changeAt))
         (newState, List.empty[ActionResult])
-        State.set(newState).map(_ => List.empty[ActionResult])
+        State.set(newState).map(_ => state.me.map(me => SendTowerStatus(me, TowerInfected)).toList)
       case _ =>
         state.towerCondition match {
           case TowerReady =>
@@ -153,18 +157,23 @@ object TowerLogic {
                 for {
                   _ <- updateSelfOnSituation(situation)
                   maybeFire <- fire(situation, now)
-                } yield maybeFire.toList
+
+                } yield {
+                  val maybeStatus = state.me.map(me => SendTowerStatus(me, TowerReloading))
+                  maybeFire.toList ::: maybeStatus.toList
+                }
               case _ => noAction
             }
           case TowerReloading =>
             if (state.scheduledStateChangeAt.exists(_.isBefore(now))) {
-              State.set(state.copy(towerCondition         = TowerReady, scheduledStateChangeAt = None)).map(_ => List.empty)
+              State.set(state.copy(towerCondition         = TowerReady, scheduledStateChangeAt = None)).map(_ => state.me.map(me => SendTowerStatus(me, TowerLogic.TowerReady)).toList)
             } else {
               noAction
             }
           case TowerInfected =>
             if (state.scheduledStateChangeAt.exists(_.isBefore(now))) {
-              State.set(state.copy(towerCondition         = TowerReady, scheduledStateChangeAt = None)).map(_ => List.empty)
+              State.set(state.copy(towerCondition         = TowerReady, scheduledStateChangeAt = None)).map(_ => state.me.map(me => SendTowerStatus(me, TowerLogic.TowerReady)).toList)
+
             } else {
               noAction
             }
