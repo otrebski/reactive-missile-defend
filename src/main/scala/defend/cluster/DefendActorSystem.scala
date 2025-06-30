@@ -14,10 +14,10 @@ trait DefendActorSystem {
 
   Cluster(system).registerOnMemberRemoved {
     // exit JVM when ActorSystem has been terminated
-    system.registerOnTermination(System.exit(-1))
+    system.registerOnTermination(System.exit(0))
     // in case ActorSystem shutdown takes longer than 10 seconds,
     // exit the JVM forcefully anyway
-    system.scheduler.scheduleOnce(10.seconds)(System.exit(-1))(system.dispatcher)
+    system.scheduler.scheduleOnce(10.seconds)(System.exit(0))(system.dispatcher)
     // shut down ActorSystem
     system.terminate()
   }
