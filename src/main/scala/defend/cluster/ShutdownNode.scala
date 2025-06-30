@@ -8,6 +8,7 @@ import pl.project13.scala.rainbow._
 import scala.concurrent.{ Await, Awaitable, CanAwait }
 import scala.concurrent.duration.FiniteDuration
 import scala.language.postfixOps
+import scala.concurrent.duration._
 
 trait ShutdownNode {
 
